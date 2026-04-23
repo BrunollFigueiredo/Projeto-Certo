@@ -6,9 +6,11 @@ using System.Collections.Generic;
 public class Puzzlebotoes : NetworkBehaviour
 {
     public int[] sequenciaCorreta = { 2, 1, 3, 4 };
-
+    public GameObject PortaEsquerda;
+    public GameObject PortaDireita;
     public PainelBotao[] listaDeBotoes;
-
+    
+    
     private List<int> sequenciaJogador = new List<int>();
     private bool processando = false;
 
@@ -46,8 +48,14 @@ public class Puzzlebotoes : NetworkBehaviour
         {
             if (sequenciaJogador[i] != sequenciaCorreta[i])
                 return false;
+            else
+            {
+                PortaEsquerda.transform.Translate(11, 0, 0);
+                PortaDireita.transform.Translate(-11, 0, 0);
+            }
         }
         return true;
+        
     }
 
     IEnumerator FinalizarComDelay(bool acertou)
@@ -82,4 +90,5 @@ public class Puzzlebotoes : NetworkBehaviour
                 btn.SubirComCor(cor, resetarCor);
         }
     }
+    
 }

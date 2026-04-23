@@ -1,15 +1,14 @@
 using Fusion;
 using UnityEngine;
-
 public class Player : NetworkBehaviour
 {
     private NetworkCharacterController _cc;
 
     [SerializeField] private float speed = 15f;
     [SerializeField] private Transform cameraHolder;
-
+    
     [Networked] private NetworkButtons PreviousButtons { get; set; }
-
+    
     private void Awake()
     {
         _cc = GetComponent<NetworkCharacterController>();
@@ -51,5 +50,8 @@ public class Player : NetworkBehaviour
             PreviousButtons = data.buttons;
         }
     }
-
+    private void Update()
+    {
+        
+    }
 }

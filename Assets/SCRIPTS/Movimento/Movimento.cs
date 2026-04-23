@@ -1,12 +1,12 @@
 using UnityEngine;
-
+using TMPro;
 public class Movimento : MonoBehaviour
 {
     public VariableJoystick joystick;
-
+    float tempo = 60;
     [Header("Configurações de Câmera")]
     [SerializeField] private float sensibilidade = 0.15f;
-
+    public TMP_Text segundos;
     void Update()
     {
         if (joystick != null)
@@ -29,6 +29,12 @@ public class Movimento : MonoBehaviour
                     }
                 }
             }
+        }
+        tempo -= Time.deltaTime;
+        segundos.text = tempo.ToString();
+        if (tempo <= 0)
+        {
+            Debug.Log("Você Perdeu!");
         }
     }
 

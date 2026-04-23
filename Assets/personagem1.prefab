@@ -348,6 +348,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 199
   cameraHolder: {fileID: 8775124030767141586}
+  segundos: {fileID: 3178632819417537717, guid: ea00a23315abd274ab18978c2d7de58b, type: 3}
 --- !u!136 &-3260633265016752686
 CapsuleCollider:
   m_ObjectHideFlags: 0
