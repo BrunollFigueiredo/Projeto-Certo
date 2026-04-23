@@ -330,9 +330,9 @@ MonoBehaviour:
   _stateAuthorityChangeErrorCorrectionDelta: 0
   gravity: -20
   jumpImpulse: 8
-  acceleration: 10
-  braking: 10
-  maxSpeed: 15
+  acceleration: 999
+  braking: 15
+  maxSpeed: 30
   rotationSpeed: 15
 --- !u!114 &-2160507636671312091
 MonoBehaviour:

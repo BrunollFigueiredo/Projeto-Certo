@@ -18,6 +18,8 @@ public struct NetworkInputData : INetworkInput
     public NetworkButtons buttons;
 }
 
+public enum PapelJogador { Forca, Inteligencia }
+
 public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 {
     [SerializeField] private NetworkPrefabRef _playerPrefab;
@@ -27,6 +29,8 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     public static float YawInput;
     public static float PitchInput;
 
+    public static PapelJogador PapelLocal { get; private set; } = PapelJogador.Forca;
+
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
     private NetworkRunner _runner;
 
@@ -34,8 +38,11 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (_runner == null)
         {
-            if (GUI.Button(new Rect(0, 0, 200, 40), "Host")) StartGame(GameMode.Host);
-            if (GUI.Button(new Rect(0, 40, 200, 40), "Join")) StartGame(GameMode.Client);
+            float w = 320, h = 80;
+            float x = (Screen.width - w) / 2f;
+            float y = (Screen.height - h) / 2f;
+            GUI.skin.button.fontSize = 32;
+            if (GUI.Button(new Rect(x, y, w, h), "Jogar")) StartGame(GameMode.Shared);
         }
     }
 
@@ -57,8 +64,14 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        if (runner.IsServer)
+        if (player == runner.LocalPlayer)
         {
+            int outrosJogadores = 0;
+            foreach (var p in runner.ActivePlayers)
+                if (p != runner.LocalPlayer) outrosJogadores++;
+
+            PapelLocal = outrosJogadores == 0 ? PapelJogador.Forca : PapelJogador.Inteligencia;
+
             runner.Spawn(_playerPrefab, transform.position, transform.rotation, player);
         }
     }
@@ -89,7 +102,8 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             GameMode = mode,
             SessionName = "TestRoom",
             Scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex),
-            SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
+            SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>(),
+            PlayerCount = 10
         });
     }
 }

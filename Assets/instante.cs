@@ -14,6 +14,12 @@ public class instante : MonoBehaviour
 
     public void Interagir()
     {
+        if (BasicSpawner.PapelLocal != PapelJogador.Inteligencia)
+        {
+            FeedbackUI.Mostrar("Você não consegue entender essa leitura.");
+            return;
+        }
+
         if (painelLivroUI == null) return;
 
         bool estaAberto = painelLivroUI.activeSelf;

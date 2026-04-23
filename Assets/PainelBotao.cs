@@ -22,6 +22,12 @@ public class PainelBotao : MonoBehaviour
 
     private void OnMouseDown()
     {
+        if (BasicSpawner.PapelLocal != PapelJogador.Forca)
+        {
+            FeedbackUI.Mostrar("Você não tem força suficiente para pressionar isso.");
+            return;
+        }
+
         Debug.Log("O Unity detectou um clique direto no objeto: " + gameObject.name);
         var puzzle = Object.FindObjectOfType<Puzzlebotoes>();
         if (puzzle != null)
