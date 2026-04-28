@@ -34,16 +34,10 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
     private NetworkRunner _runner;
 
-    private void OnGUI()
+    private void Start()
     {
         if (_runner == null)
-        {
-            float w = 320, h = 80;
-            float x = (Screen.width - w) / 2f;
-            float y = (Screen.height - h) / 2f;
-            GUI.skin.button.fontSize = 32;
-            if (GUI.Button(new Rect(x, y, w, h), "Jogar")) StartGame(GameMode.Shared);
-        }
+            StartGame(GameMode.Shared);
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
@@ -66,11 +60,18 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (player == runner.LocalPlayer)
         {
-            int outrosJogadores = 0;
-            foreach (var p in runner.ActivePlayers)
-                if (p != runner.LocalPlayer) outrosJogadores++;
-
-            PapelLocal = outrosJogadores == 0 ? PapelJogador.Forca : PapelJogador.Inteligencia;
+            string papelSalvo = PlayerPrefs.GetString("PapelEscolhido", "");
+            if (papelSalvo == "Forca")
+                PapelLocal = PapelJogador.Forca;
+            else if (papelSalvo == "Inteligencia")
+                PapelLocal = PapelJogador.Inteligencia;
+            else
+            {
+                int outrosJogadores = 0;
+                foreach (var p in runner.ActivePlayers)
+                    if (p != runner.LocalPlayer) outrosJogadores++;
+                PapelLocal = outrosJogadores == 0 ? PapelJogador.Forca : PapelJogador.Inteligencia;
+            }
 
             runner.Spawn(_playerPrefab, transform.position, transform.rotation, player);
         }

@@ -63,6 +63,15 @@ public class Puzzlebotoes : NetworkBehaviour
         yield return new WaitForSeconds(0.5f);
         RPC_FinalizarTodos(acertou);
         processando = false;
+
+        if (acertou)
+            RPC_IrParaFase2();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_IrParaFase2()
+    {
+        TransicaoFase.Ir(Runner, "Fase2");
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

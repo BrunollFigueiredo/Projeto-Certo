@@ -6,8 +6,17 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Cena teste 1 jogador.unity
+    path: Assets/Scenes/Tela Inicial.unity
+    guid: 971782082f22edc4da07abd0ccf3ed4a
+  - enabled: 1
+    path: Assets/Scenes/Escolha Jogador.unity
+    guid: 8f8c41b95cfceee4d8d44b4f8c5d6179
+  - enabled: 1
+    path: Assets/Scenes/Fase1.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/Fase2.unity
+    guid: d92e26a9e5f91b049906424696452864
   - enabled: 0
     path: Assets/Cena Teste.unity
     guid: 983b2877daf543b4895c4732de860000

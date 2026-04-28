@@ -2,13 +2,15 @@ using Fusion;
 using UnityEngine;
 public class Player : NetworkBehaviour
 {
+    public static bool LocalSpawnou { get; private set; } = false;
+
     private NetworkCharacterController _cc;
 
     [SerializeField] private float speed = 15f;
     [SerializeField] private Transform cameraHolder;
-    
+
     [Networked] private NetworkButtons PreviousButtons { get; set; }
-    
+
     private void Awake()
     {
         _cc = GetComponent<NetworkCharacterController>();
@@ -18,12 +20,23 @@ public class Player : NetworkBehaviour
     {
         if (HasInputAuthority && cameraHolder != null)
         {
+            Camera sceneCam = Camera.main;
+            if (sceneCam != null && !sceneCam.transform.IsChildOf(transform))
+                sceneCam.gameObject.SetActive(false);
+
             cameraHolder.gameObject.SetActive(true);
+            LocalSpawnou = true;
         }
         else if (cameraHolder != null)
         {
             cameraHolder.gameObject.SetActive(false);
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (HasInputAuthority)
+            LocalSpawnou = false;
     }
 
     public override void FixedUpdateNetwork()

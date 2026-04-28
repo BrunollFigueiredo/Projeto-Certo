@@ -3,12 +3,14 @@ using TMPro;
 public class Movimento : MonoBehaviour
 {
     public VariableJoystick joystick;
-    float tempo = 60;
+    float tempo = 120f;
     [Header("Configurações de Câmera")]
     [SerializeField] private float sensibilidade = 0.15f;
     public TMP_Text segundos;
     void Update()
     {
+        if (!Player.LocalSpawnou) return;
+
         if (joystick != null)
         {
             Vector2 direction = new Vector2(joystick.Horizontal, joystick.Vertical);
@@ -30,8 +32,9 @@ public class Movimento : MonoBehaviour
                 }
             }
         }
+
         tempo -= Time.deltaTime;
-        segundos.text = tempo.ToString();
+        segundos.text = Mathf.CeilToInt(tempo).ToString();
         if (tempo <= 0)
         {
             Debug.Log("Você Perdeu!");
