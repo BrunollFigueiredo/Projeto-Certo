@@ -18,13 +18,17 @@ public class Player : NetworkBehaviour
 
     public override void Spawned()
     {
-        if (HasInputAuthority && cameraHolder != null)
+        if (HasInputAuthority)
         {
-            Camera sceneCam = Camera.main;
-            if (sceneCam != null && !sceneCam.transform.IsChildOf(transform))
-                sceneCam.gameObject.SetActive(false);
+            if (cameraHolder != null)
+            {
+                Camera sceneCam = Camera.main;
+                if (sceneCam != null && !sceneCam.transform.IsChildOf(transform))
+                    sceneCam.gameObject.SetActive(false);
 
-            cameraHolder.gameObject.SetActive(true);
+                cameraHolder.gameObject.SetActive(true);
+            }
+
             LocalSpawnou = true;
         }
         else if (cameraHolder != null)

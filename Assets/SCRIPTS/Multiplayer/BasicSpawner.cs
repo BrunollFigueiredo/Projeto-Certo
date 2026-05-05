@@ -30,6 +30,7 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     public static float PitchInput;
 
     public static PapelJogador PapelLocal { get; private set; } = PapelJogador.Forca;
+    public static int JogadoresConectados { get; private set; } = 0;
 
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
     private NetworkRunner _runner;
@@ -58,6 +59,8 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
+        JogadoresConectados++;
+
         if (player == runner.LocalPlayer)
         {
             string papelSalvo = PlayerPrefs.GetString("PapelEscolhido", "");
@@ -76,7 +79,10 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             runner.Spawn(_playerPrefab, transform.position, transform.rotation, player);
         }
     }
-    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }
+    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+    {
+        JogadoresConectados--;
+    }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
     public void OnConnectedToServer(NetworkRunner runner) { }

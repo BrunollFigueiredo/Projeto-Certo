@@ -1,15 +1,41 @@
 using UnityEngine;
 using TMPro;
+
 public class Movimento : MonoBehaviour
 {
     public VariableJoystick joystick;
     float tempo = 120f;
+
     [Header("Configurações de Câmera")]
     [SerializeField] private float sensibilidade = 0.15f;
+
     public TMP_Text segundos;
+
+    [Header("UI")]
+    [SerializeField] private GameObject painelJoystick;
+    [SerializeField] private GameObject botaoPulo;
+    [SerializeField] private GameObject contadorTempo;
+
+    private bool uiAtivada = false;
+
+    void Start()
+    {
+        if (painelJoystick != null) painelJoystick.SetActive(false);
+        if (botaoPulo != null) botaoPulo.SetActive(false);
+        if (contadorTempo != null) contadorTempo.SetActive(false);
+    }
+
     void Update()
     {
         if (!Player.LocalSpawnou) return;
+
+        if (!uiAtivada)
+        {
+            uiAtivada = true;
+            if (painelJoystick != null) painelJoystick.SetActive(true);
+            if (botaoPulo != null) botaoPulo.SetActive(true);
+            if (contadorTempo != null) contadorTempo.SetActive(true);
+        }
 
         if (joystick != null)
         {
@@ -34,7 +60,7 @@ public class Movimento : MonoBehaviour
         }
 
         tempo -= Time.deltaTime;
-        segundos.text = Mathf.CeilToInt(tempo).ToString();
+        if (segundos != null) segundos.text = Mathf.CeilToInt(tempo).ToString();
         if (tempo <= 0)
         {
             Debug.Log("Você Perdeu!");
