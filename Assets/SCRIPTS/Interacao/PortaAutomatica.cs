@@ -30,25 +30,44 @@ public class PortaAutomatica : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
+
         jogadorDentro = true;
+
         if (!aberta && !animando)
-            StartCoroutine(AnimarPorta(abrindo: true));
+        {
+            StartCoroutine(AnimarPorta(true));
+        }
     }
 
     private void OnTriggerExit(Collider other)
     {
         if (!other.CompareTag("Player")) return;
+
         jogadorDentro = false;
+
         if (aberta && !animando)
-            StartCoroutine(AnimarPorta(abrindo: false));
+        {
+            StartCoroutine(AnimarPorta(false));
+        }
     }
 
     IEnumerator AnimarPorta(bool abrindo)
     {
         animando = true;
 
-        Vector3 destDireita = abrindo ? posAbertaDireita : posOriginalDireita;
-        Vector3 destEsquerda = abrindo ? posAbertaEsquerda : posOriginalEsquerda;
+        Vector3 destDireita;
+        Vector3 destEsquerda;
+
+        if (abrindo)
+        {
+            destDireita = posAbertaDireita;
+            destEsquerda = posAbertaEsquerda;
+        }
+        else
+        {
+            destDireita = posOriginalDireita;
+            destEsquerda = posOriginalEsquerda;
+        }
 
         while (Vector3.Distance(portaDireita.localPosition, destDireita) > 0.01f)
         {
@@ -62,8 +81,9 @@ public class PortaAutomatica : MonoBehaviour
         aberta = abrindo;
         animando = false;
 
-        // Corrige caso o jogador tenha saído enquanto a porta ainda abria
         if (aberta && !jogadorDentro)
-            StartCoroutine(AnimarPorta(abrindo: false));
+        {
+            StartCoroutine(AnimarPorta(false));
+        }
     }
 }

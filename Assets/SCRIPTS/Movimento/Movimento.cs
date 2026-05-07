@@ -6,15 +6,11 @@ public class Movimento : MonoBehaviour
     public VariableJoystick joystick;
     float tempo = 120f;
 
-    [Header("Configurações de Câmera")]
     [SerializeField] private float sensibilidade = 0.15f;
 
-    public TMP_Text segundos;
-
-    [Header("UI")]
     [SerializeField] private GameObject painelJoystick;
     [SerializeField] private GameObject botaoPulo;
-    [SerializeField] private GameObject contadorTempo;
+    [SerializeField] private TMP_Text textoTempo;
 
     private bool uiAtivada = false;
 
@@ -22,7 +18,7 @@ public class Movimento : MonoBehaviour
     {
         if (painelJoystick != null) painelJoystick.SetActive(false);
         if (botaoPulo != null) botaoPulo.SetActive(false);
-        if (contadorTempo != null) contadorTempo.SetActive(false);
+        if (textoTempo != null) textoTempo.gameObject.SetActive(false);
     }
 
     void Update()
@@ -34,7 +30,7 @@ public class Movimento : MonoBehaviour
             uiAtivada = true;
             if (painelJoystick != null) painelJoystick.SetActive(true);
             if (botaoPulo != null) botaoPulo.SetActive(true);
-            if (contadorTempo != null) contadorTempo.SetActive(true);
+            if (textoTempo != null) textoTempo.gameObject.SetActive(true);
         }
 
         if (joystick != null)
@@ -60,7 +56,7 @@ public class Movimento : MonoBehaviour
         }
 
         tempo -= Time.deltaTime;
-        if (segundos != null) segundos.text = Mathf.CeilToInt(tempo).ToString();
+        if (textoTempo != null) textoTempo.text = Mathf.CeilToInt(tempo).ToString();
         if (tempo <= 0)
         {
             Debug.Log("Você Perdeu!");

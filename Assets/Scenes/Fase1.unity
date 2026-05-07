@@ -2807,6 +2807,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -1599826595754709761, guid: 7a9083897c5f8a94f94925353e010d67, type: 3}
       insertIndex: -1
       addedObject: {fileID: 139376601}
+    - targetCorrespondingSourceObject: {fileID: -1599826595754709761, guid: 7a9083897c5f8a94f94925353e010d67, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1964602097}
     - targetCorrespondingSourceObject: {fileID: -466329591000292508, guid: 7a9083897c5f8a94f94925353e010d67, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1472864341}
@@ -4092,10 +4095,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   joystick: {fileID: 302797534}
   sensibilidade: 0.15
-  segundos: {fileID: 1916162975}
   painelJoystick: {fileID: 1072704379}
   botaoPulo: {fileID: 1799573747}
-  contadorTempo: {fileID: 1916162973}
+  textoTempo: {fileID: 1916162975}
 --- !u!114 &1162800411
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4110,6 +4112,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _playerPrefab:
     RawGuidValue: 79fa9d382db20e542b1a3bb67d07f95c
+  pontoDeSpawn: {fileID: 0}
 --- !u!4 &1162800412
 Transform:
   m_ObjectHideFlags: 0
@@ -5597,7 +5600,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1916162974
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5637,7 +5640,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 180
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5716,6 +5719,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1916162973}
   m_CullTransparentMesh: 1
+--- !u!65 &1964602097
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 855283110}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.033846702, y: 2.1979675, z: 0.46733803}
+  m_Center: {x: 0.54586166, y: -0.13761482, z: 0.23665252}
 --- !u!64 &1979761289
 MeshCollider:
   m_ObjectHideFlags: 0

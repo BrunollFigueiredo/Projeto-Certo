@@ -23,6 +23,7 @@ public enum PapelJogador { Forca, Inteligencia }
 public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 {
     [SerializeField] private NetworkPrefabRef _playerPrefab;
+    [SerializeField] private Transform pontoDeSpawn;
 
     public static Vector2 TouchMoveInput;
     public static bool JumpPressed;
@@ -76,7 +77,9 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
                 PapelLocal = outrosJogadores == 0 ? PapelJogador.Forca : PapelJogador.Inteligencia;
             }
 
-            runner.Spawn(_playerPrefab, transform.position, transform.rotation, player);
+            Vector3 posicao = pontoDeSpawn != null ? pontoDeSpawn.position : transform.position;
+            Quaternion rotacao = pontoDeSpawn != null ? pontoDeSpawn.rotation : transform.rotation;
+            runner.Spawn(_playerPrefab, posicao, rotacao, player);
         }
     }
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)

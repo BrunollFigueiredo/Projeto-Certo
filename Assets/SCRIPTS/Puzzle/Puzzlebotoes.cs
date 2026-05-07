@@ -9,8 +9,7 @@ public class Puzzlebotoes : NetworkBehaviour
     public GameObject PortaEsquerda;
     public GameObject PortaDireita;
     public PainelBotao[] listaDeBotoes;
-    
-    
+
     private List<int> sequenciaJogador = new List<int>();
     private bool processando = false;
 
@@ -18,11 +17,7 @@ public class Puzzlebotoes : NetworkBehaviour
     {
         if (HasStateAuthority == false) return;
         if (processando) return;
-
-        // Ignora se este botão já foi pressionado nesta rodada
         if (sequenciaJogador.Contains(idDoBotaoClicado)) return;
-
-        Debug.Log("<color=blue>Toque detectado no Botão ID: </color>" + idDoBotaoClicado);
 
         RPC_DescerBotao(idDoBotaoClicado);
         sequenciaJogador.Add(idDoBotaoClicado);
@@ -32,12 +27,6 @@ public class Puzzlebotoes : NetworkBehaviour
             bool acertou = VerificarSequencia();
             processando = true;
             sequenciaJogador.Clear();
-
-            if (acertou)
-                Debug.Log("<color=gold>PUZZLE RESOLVIDO!</color>");
-            else
-                Debug.Log("<color=red>SEQUÊNCIA ERRADA! Resetando...</color>");
-
             StartCoroutine(FinalizarComDelay(acertou));
         }
     }
@@ -47,15 +36,17 @@ public class Puzzlebotoes : NetworkBehaviour
         for (int i = 0; i < sequenciaCorreta.Length; i++)
         {
             if (sequenciaJogador[i] != sequenciaCorreta[i])
+            {
                 return false;
+            }
             else
             {
                 PortaEsquerda.transform.Translate(11, 0, 0);
                 PortaDireita.transform.Translate(-11, 0, 0);
             }
         }
+
         return true;
-        
     }
 
     IEnumerator FinalizarComDelay(bool acertou)
@@ -65,7 +56,9 @@ public class Puzzlebotoes : NetworkBehaviour
         processando = false;
 
         if (acertou)
+        {
             RPC_IrParaFase2();
+        }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -77,7 +70,7 @@ public class Puzzlebotoes : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_DescerBotao(int id)
     {
-        foreach (var btn in listaDeBotoes)
+        foreach (PainelBotao btn in listaDeBotoes)
         {
             if (btn != null && btn.idBotao == id)
             {
@@ -90,14 +83,26 @@ public class Puzzlebotoes : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_FinalizarTodos(bool acertou)
     {
-        Color cor = acertou ? Color.green : Color.red;
-        bool resetarCor = !acertou;
+        Color cor;
+        bool resetarCor;
 
-        foreach (var btn in listaDeBotoes)
+        if (acertou)
+        {
+            cor = Color.green;
+            resetarCor = false;
+        }
+        else
+        {
+            cor = Color.red;
+            resetarCor = true;
+        }
+
+        foreach (PainelBotao btn in listaDeBotoes)
         {
             if (btn != null)
+            {
                 btn.SubirComCor(cor, resetarCor);
+            }
         }
     }
-    
 }

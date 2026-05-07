@@ -16,8 +16,11 @@ public class PainelBotao : MonoBehaviour
     {
         posOriginal = transform.localPosition;
         meshRenderer = GetComponent<MeshRenderer>();
+
         if (meshRenderer != null)
+        {
             corOriginal = meshRenderer.material.color;
+        }
     }
 
     private void OnMouseDown()
@@ -28,15 +31,14 @@ public class PainelBotao : MonoBehaviour
             return;
         }
 
-        Debug.Log("O Unity detectou um clique direto no objeto: " + gameObject.name);
-        var puzzle = Object.FindObjectOfType<Puzzlebotoes>();
+        Puzzlebotoes puzzle = Object.FindObjectOfType<Puzzlebotoes>();
+
         if (puzzle != null)
+        {
             puzzle.TenteiPressionar(idBotao);
-        else
-            Debug.LogWarning("Nenhum Puzzlebotoes encontrado para notificar o pressionamento.");
+        }
     }
 
-    // Desce e fica na posição baixa
     public void Descer()
     {
         if (estaAbaixado) return;
@@ -44,7 +46,6 @@ public class PainelBotao : MonoBehaviour
         StartCoroutine(AnimarDescer());
     }
 
-    // Sobe com cor de feedback; se resetarCorDepois=true volta à cor original após 1s
     public void SubirComCor(Color cor, bool resetarCorDepois)
     {
         if (!estaAbaixado) return;
@@ -56,24 +57,29 @@ public class PainelBotao : MonoBehaviour
     {
         estaAbaixado = true;
         Vector3 destino = posOriginal + new Vector3(0f, -deslocamentoY, 0f);
+
         while (Vector3.Distance(transform.localPosition, destino) > 0.01f)
         {
             transform.localPosition = Vector3.MoveTowards(transform.localPosition, destino, velocidade * Time.deltaTime);
             yield return null;
         }
+
         transform.localPosition = destino;
     }
 
     IEnumerator AnimarSubir(Color cor, bool resetarCorDepois)
     {
         if (meshRenderer != null)
+        {
             meshRenderer.material.color = cor;
+        }
 
         while (Vector3.Distance(transform.localPosition, posOriginal) > 0.01f)
         {
             transform.localPosition = Vector3.MoveTowards(transform.localPosition, posOriginal, velocidade * Time.deltaTime);
             yield return null;
         }
+
         transform.localPosition = posOriginal;
         estaAbaixado = false;
 

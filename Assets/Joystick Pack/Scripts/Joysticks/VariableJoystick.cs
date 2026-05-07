@@ -33,11 +33,27 @@ public class VariableJoystick : Joystick
 
     public override void OnPointerDown(PointerEventData eventData)
     {
-        if(joystickType != JoystickType.Fixed)
+        toqueValido = false;
+
+        if (joystickType == JoystickType.Fixed)
+        {
+            Vector2 centroTela = RectTransformUtility.WorldToScreenPoint(
+                eventData.pressEventCamera,
+                background.position
+            );
+
+            float raioTela = (background.sizeDelta.x * background.lossyScale.x) / 2f;
+            float distancia = Vector2.Distance(eventData.position, centroTela);
+
+            if (distancia > raioTela) return;
+        }
+
+        if (joystickType != JoystickType.Fixed)
         {
             background.anchoredPosition = ScreenPointToAnchoredPosition(eventData.position);
             background.gameObject.SetActive(true);
         }
+
         base.OnPointerDown(eventData);
     }
 
