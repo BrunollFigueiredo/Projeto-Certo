@@ -44,6 +44,7 @@ GameObject:
   - component: {fileID: 7633791322200059123}
   - component: {fileID: 1621811545265305562}
   - component: {fileID: 1463751966602177253}
+  - component: {fileID: 7911258568966904225}
   m_Layer: 0
   m_Name: Camera
   m_TagString: MainCamera
@@ -169,6 +170,27 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!65 &7911258568966904225
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8733992157110363322}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 2}
+  m_Center: {x: 0, y: 0, z: 1}
 --- !u!1001 &1520243999747708143
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -348,7 +370,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 199
   cameraHolder: {fileID: 8775124030767141586}
-  segundos: {fileID: 3178632819417537717, guid: ea00a23315abd274ab18978c2d7de58b, type: 3}
 --- !u!136 &-3260633265016752686
 CapsuleCollider:
   m_ObjectHideFlags: 0
