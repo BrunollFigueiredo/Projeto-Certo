@@ -3,18 +3,29 @@ using UnityEngine.EventSystems;
 
 public class ArrastarItem : MonoBehaviour
 {
-    [SerializeField] private Transform jogador;
-    [SerializeField] private float alcanceMaximo = 3f;
+    private static ArrastarItem objetoSendoSeguro = null;
 
-    private bool arrastando = false;
-    private int fingerIdArrastando = -1;
-    private float alturaObjeto;
+    private Transform jogador;
+    private Transform pontoMao;
+    private Camera cam;
+    private bool segurandoEsteObjeto = false;
     private Rigidbody rb;
     private float tempoCooldown = 0f;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+
+        if (rb != null)
+        {
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.constraints = RigidbodyConstraints.FreezeRotation;
+        }
+
+        // Corrige escala negativa que quebra o BoxCollider
+        Vector3 s = transform.localScale;
+        transform.localScale = new Vector3(Mathf.Abs(s.x), Mathf.Abs(s.y), Mathf.Abs(s.z));
     }
 
     void Update()
@@ -22,91 +33,129 @@ public class ArrastarItem : MonoBehaviour
         if (tempoCooldown > 0f)
             tempoCooldown -= Time.deltaTime;
 
-        if (arrastando)
+        if (jogador == null)
         {
-            bool encontrou = false;
+            jogador = Player.LocalTransform;
+            if (jogador == null) return;
+            pontoMao = Player.LocalPontoMao != null ? Player.LocalPontoMao : jogador;
+            cam = Player.LocalCamera != null ? Player.LocalCamera : Camera.main;
+            Debug.Log($"[ArrastarItem] Jogador encontrado. PontoMao={pontoMao.name} Camera={cam?.name}");
+        }
 
-            for (int i = 0; i < Input.touchCount; i++)
-            {
-                Touch t = Input.GetTouch(i);
-                if (t.fingerId != fingerIdArrastando) continue;
-
-                encontrou = true;
-
-                if (t.phase == TouchPhase.Moved || t.phase == TouchPhase.Stationary)
-                    MoverObjeto(t.position);
-
-                if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
-                    SoltarObjeto();
-
-                break;
-            }
-
-            if (!encontrou)
+        if (segurandoEsteObjeto)
+        {
+            AtualizarPosicaoNaMao();
+            if (DetectouToque(out _))
                 SoltarObjeto();
-
             return;
         }
 
         if (tempoCooldown > 0f) return;
+        if (objetoSendoSeguro != null) return;
+        if (!CompareTag("Pegavel")) return;
 
+        if (DetectouToque(out Vector2 posicaoToque))
+            TentarPegarObjeto(posicaoToque);
+    }
+
+    // Abstrai touch (mobile) e mouse (editor) num único retorno
+    bool DetectouToque(out Vector2 posicao)
+    {
+#if UNITY_EDITOR
+        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
+        {
+            posicao = Input.mousePosition;
+            return true;
+        }
+#else
         for (int i = 0; i < Input.touchCount; i++)
         {
             Touch t = Input.GetTouch(i);
             if (t.phase != TouchPhase.Began) continue;
             if (EventSystem.current.IsPointerOverGameObject(t.fingerId)) continue;
 
-            Ray ray = Camera.main.ScreenPointToRay(t.position);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit) && hit.collider.gameObject == gameObject)
-            {
-                arrastando = true;
-                fingerIdArrastando = t.fingerId;
-                alturaObjeto = transform.position.y;
-
-                if (rb != null)
-                    rb.isKinematic = true;
-
-                break;
-            }
+            posicao = t.position;
+            return true;
         }
+#endif
+        posicao = Vector2.zero;
+        return false;
     }
 
-    void MoverObjeto(Vector2 posicaoTela)
+    void TentarPegarObjeto(Vector2 posicaoToque)
     {
-        Ray ray = Camera.main.ScreenPointToRay(posicaoTela);
-        Plane plano = new Plane(Vector3.up, new Vector3(0f, alturaObjeto, 0f));
-        float distancia;
-
-        if (plano.Raycast(ray, out distancia))
+        if (cam == null)
         {
-            Vector3 novaPosicao = ray.GetPoint(distancia);
-
-            if (jogador != null)
-            {
-                Vector3 direcao = novaPosicao - jogador.position;
-                direcao.y = 0f;
-
-                if (direcao.magnitude > alcanceMaximo)
-                {
-                    direcao = direcao.normalized * alcanceMaximo;
-                    novaPosicao = jogador.position + direcao;
-                    novaPosicao.y = alturaObjeto;
-                }
-            }
-
-            transform.position = novaPosicao;
+            Debug.LogWarning("[ArrastarItem] Camera é null — verifique o CameraHolder do Player.");
+            return;
         }
+
+        Ray ray = cam.ScreenPointToRay(posicaoToque);
+        if (!Physics.Raycast(ray, out RaycastHit hit))
+        {
+            Debug.Log("[ArrastarItem] Raycast não acertou nada.");
+            return;
+        }
+
+        Debug.Log($"[ArrastarItem] Raycast acertou: {hit.collider.gameObject.name}");
+
+        if (hit.collider.gameObject != gameObject) return;
+
+        PegarObjeto();
+        Debug.Log("[ArrastarItem] Objeto pego!");
+    }
+
+    void AtualizarPosicaoNaMao()
+    {
+        transform.position = pontoMao.position;
+        transform.rotation = pontoMao.rotation;
+    }
+
+    void PegarObjeto()
+    {
+        segurandoEsteObjeto = true;
+        objetoSendoSeguro = this;
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
+
+        transform.SetParent(pontoMao);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
     }
 
     void SoltarObjeto()
     {
-        arrastando = false;
-        fingerIdArrastando = -1;
-        tempoCooldown = 0.3f;
+        segurandoEsteObjeto = false;
+        objetoSendoSeguro = null;
+
+        PontoDeEncaixe[] pontos = FindObjectsByType<PontoDeEncaixe>(FindObjectsSortMode.None);
+        foreach (PontoDeEncaixe ponto in pontos)
+        {
+            if (!ponto.AceitaObjeto(gameObject)) continue;
+
+            float distancia = Vector3.Distance(transform.position, ponto.transform.position);
+            if (distancia <= ponto.RaioDeSnap)
+            {
+                ponto.EncaixarObjeto(transform);
+                return;
+            }
+        }
+
+        tempoCooldown = 0.4f;
+        transform.SetParent(null);
 
         if (rb != null)
             rb.isKinematic = false;
+    }
+
+    void OnDisable()
+    {
+        if (segurandoEsteObjeto)
+            SoltarObjeto();
     }
 }

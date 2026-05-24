@@ -3708,7 +3708,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerPrefab:
-    RawGuidValue: 79fa9d382db20e542b1a3bb67d07f95c
+    RawGuidValue: 71a2b93b7afc09f438e550f49730732d
   pontoDeSpawn: {fileID: 0}
 --- !u!4 &1162800412
 Transform:
