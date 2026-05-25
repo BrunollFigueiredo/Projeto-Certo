@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Tela Inicial.unity
     guid: 971782082f22edc4da07abd0ccf3ed4a
   - enabled: 1
+    path: Assets/Scenes/CutsceneInicio.unity
+    guid: 8159bd14a7da19c499200de9969fb77c
+  - enabled: 1
     path: Assets/Scenes/Escolha Jogador.unity
     guid: 8f8c41b95cfceee4d8d44b4f8c5d6179
   - enabled: 1

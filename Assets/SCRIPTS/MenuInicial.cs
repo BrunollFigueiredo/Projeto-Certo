@@ -5,7 +5,7 @@ public class MenuInicial : MonoBehaviour
 {
     public void Jogar()
     {
-        SceneManager.LoadScene("Escolha Jogador");
+        SceneManager.LoadScene("CutsceneInicio");
     }
     public void Sair()
     {
