@@ -84,25 +84,28 @@ public class ArrastarItem : MonoBehaviour
 
     void TentarPegarObjeto(Vector2 posicaoToque)
     {
-        if (cam == null)
-        {
-            Debug.LogWarning("[ArrastarItem] Camera é null — verifique o CameraHolder do Player.");
-            return;
-        }
+        if (cam == null) return;
 
         Ray ray = cam.ScreenPointToRay(posicaoToque);
-        if (!Physics.Raycast(ray, out RaycastHit hit))
+        RaycastHit[] hits = Physics.RaycastAll(ray, 30f);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (RaycastHit hit in hits)
         {
-            Debug.Log("[ArrastarItem] Raycast não acertou nada.");
-            return;
+            if (hit.collider.isTrigger) continue;
+            if (hit.collider.CompareTag("Player")) continue;
+
+            bool acertouEste = hit.collider.transform == transform
+                            || hit.collider.transform.IsChildOf(transform);
+
+            if (acertouEste)
+            {
+                PegarObjeto();
+                return;
+            }
+
+            break;
         }
-
-        Debug.Log($"[ArrastarItem] Raycast acertou: {hit.collider.gameObject.name}");
-
-        if (hit.collider.gameObject != gameObject) return;
-
-        PegarObjeto();
-        Debug.Log("[ArrastarItem] Objeto pego!");
     }
 
     void AtualizarPosicaoNaMao()
@@ -122,10 +125,6 @@ public class ArrastarItem : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
             rb.isKinematic = true;
         }
-
-        transform.SetParent(pontoMao);
-        transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.identity;
     }
 
     void SoltarObjeto()
@@ -147,7 +146,6 @@ public class ArrastarItem : MonoBehaviour
         }
 
         tempoCooldown = 0.4f;
-        transform.SetParent(null);
 
         if (rb != null)
             rb.isKinematic = false;

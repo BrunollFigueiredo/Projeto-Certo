@@ -11,6 +11,7 @@ public class Movimento : MonoBehaviour
     [SerializeField] private GameObject painelJoystick;
     [SerializeField] private GameObject botaoPulo;
     [SerializeField] private TMP_Text textoTempo;
+    [SerializeField] private bool usarTempo = true;
 
     private bool uiAtivada = false;
 
@@ -30,7 +31,7 @@ public class Movimento : MonoBehaviour
             uiAtivada = true;
             if (painelJoystick != null) painelJoystick.SetActive(true);
             if (botaoPulo != null) botaoPulo.SetActive(true);
-            if (textoTempo != null) textoTempo.gameObject.SetActive(true);
+            if (textoTempo != null) textoTempo.gameObject.SetActive(usarTempo);
         }
 
         if (joystick != null)
@@ -55,11 +56,14 @@ public class Movimento : MonoBehaviour
             }
         }
 
-        tempo -= Time.deltaTime;
-        if (textoTempo != null) textoTempo.text = Mathf.CeilToInt(tempo).ToString();
-        if (tempo <= 0)
+        if (usarTempo)
         {
-            Debug.Log("Você Perdeu!");
+            tempo -= Time.deltaTime;
+            if (textoTempo != null) textoTempo.text = Mathf.CeilToInt(tempo).ToString();
+            if (tempo <= 0)
+            {
+                Debug.Log("Você Perdeu!");
+            }
         }
     }
 

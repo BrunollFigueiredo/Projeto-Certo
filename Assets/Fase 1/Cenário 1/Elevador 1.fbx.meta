@@ -1,49 +1,9 @@
 fileFormatVersion: 2
-guid: 293c8e6813f1d174f9ba0659d4f8e919
+guid: 3a355ae8a27229e4ebf83db64f55e2e9
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Material
-    second: {fileID: 2100000, guid: 31dfbbbee60977140ae4c8d279e102b7, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Material.004
-    second: {fileID: 2100000, guid: e655a3119758a9a4a94587769b48d70e, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Material.005
-    second: {fileID: 2100000, guid: a2581e40b10267841987c16acfc8262f, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Material.007
-    second: {fileID: 2100000, guid: 2d43d83da2034ec43bd52da04fbca5bf, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Material.008
-    second: {fileID: 2100000, guid: 8c894afdd806e7c469721ca0cc9369fc, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Material.009
-    second: {fileID: 2100000, guid: 9ddb92a0f367f014ea06a644e11d364e, type: 2}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: Bricks075B_1K-PNG_Color
-    second: {fileID: 2800000, guid: 9f8b0bcb9c09792419f37e0b39e661dc, type: 3}
-  - first:
-      type: UnityEngine:Texture2D
-      assembly: UnityEngine.CoreModule
-      name: SurfaceImperfections020_1K-PNG_Opacity
-    second: {fileID: 2800000, guid: cf94efd8ace38df4cab369a1477ec9e6, type: 3}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0

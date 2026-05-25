@@ -7,6 +7,13 @@ public class Player : NetworkBehaviour
     public static Transform LocalPontoMao { get; private set; }
     public static Camera LocalCamera { get; private set; }
 
+    public static event System.Action SolicitarAtivarCamera;
+
+    public static void AtivarCamerasJogadores()
+    {
+        SolicitarAtivarCamera?.Invoke();
+    }
+
     private NetworkCharacterController _cc;
 
     [SerializeField] private float speed = 15f;
@@ -27,21 +34,12 @@ public class Player : NetworkBehaviour
             LocalTransform = transform;
             LocalPontoMao = pontoMao;
             LocalCamera = cameraHolder != null ? cameraHolder.GetComponentInChildren<Camera>() : Camera.main;
-
-            if (cameraHolder != null)
-            {
-                Camera sceneCam = Camera.main;
-                if (sceneCam != null && !sceneCam.transform.IsChildOf(transform))
-                {
-                    AudioListener al = sceneCam.GetComponent<AudioListener>();
-                    if (al != null) al.enabled = false;
-                    sceneCam.gameObject.SetActive(false);
-                }
-
-                cameraHolder.gameObject.SetActive(true);
-            }
-
             LocalSpawnou = true;
+
+            if (!CutsceneFase1.Ativa)
+                AtivarCamera();
+            else
+                SolicitarAtivarCamera += AtivarCamera;
         }
         else if (cameraHolder != null)
         {
@@ -49,10 +47,28 @@ public class Player : NetworkBehaviour
         }
     }
 
+    private void AtivarCamera()
+    {
+        SolicitarAtivarCamera -= AtivarCamera;
+
+        if (cameraHolder == null) return;
+
+        Camera sceneCam = Camera.main;
+        if (sceneCam != null && !sceneCam.transform.IsChildOf(transform))
+        {
+            AudioListener al = sceneCam.GetComponent<AudioListener>();
+            if (al != null) al.enabled = false;
+            sceneCam.gameObject.SetActive(false);
+        }
+
+        cameraHolder.gameObject.SetActive(true);
+    }
+
     private void OnDestroy()
     {
         if (HasInputAuthority)
         {
+            SolicitarAtivarCamera -= AtivarCamera;
             LocalSpawnou = false;
             LocalTransform = null;
             LocalPontoMao = null;
@@ -63,6 +79,7 @@ public class Player : NetworkBehaviour
     public override void FixedUpdateNetwork()
     {
         if (_cc == null) return;
+        if (CutsceneFase1.Ativa) return;
 
         if (GetInput(out NetworkInputData data))
         {
@@ -86,6 +103,6 @@ public class Player : NetworkBehaviour
     }
     private void Update()
     {
-        
+
     }
 }

@@ -16,8 +16,8 @@ public class PainelPrensa : MonoBehaviour
     [SerializeField] private Button botaoEnviar;
 
     [Header("Esteira")]
-    [SerializeField] private float velocidadeEsteira = 3f;
-    [SerializeField] private float aceleracaoEsteira = 2f;
+    [SerializeField] private float velocidadeEsteira = 4f;
+    [SerializeField] private Transform destino;
 
     [Header("Opções de Escala")]
     [SerializeField] private Vector3 escalaPequena = new Vector3(0.5f, 0.5f, 0.5f);
@@ -37,7 +37,13 @@ public class PainelPrensa : MonoBehaviour
 
     void Update()
     {
-        if (uiAberta) return;
+        if (uiAberta)
+        {
+            bool temObjeto = prensa != null && ObjetoNaPrensa();
+            botaoConfirmar.interactable = temObjeto;
+            botaoEnviar.interactable = temObjeto;
+            return;
+        }
 
         if (cam == null)
         {
@@ -48,14 +54,18 @@ public class PainelPrensa : MonoBehaviour
         if (!DetectouToque(out Vector2 posicao)) return;
 
         Ray ray = cam.ScreenPointToRay(posicao);
-        RaycastHit[] hits = Physics.RaycastAll(ray);
+        RaycastHit[] hits = Physics.RaycastAll(ray, 30f);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
         foreach (RaycastHit hit in hits)
         {
-            if (hit.collider.gameObject == gameObject)
-            {
+            if (hit.collider.isTrigger) continue;
+            if (hit.collider.CompareTag("Player")) continue;
+
+            bool acertouPainel = hit.collider.transform == transform
+                              || hit.collider.transform.IsChildOf(transform);
+            if (acertouPainel)
                 AbrirUI();
-                break;
-            }
+            break;
         }
     }
 
@@ -63,10 +73,6 @@ public class PainelPrensa : MonoBehaviour
     {
         uiAberta = true;
         painelUI.SetActive(true);
-
-        bool temObjeto = prensa != null && ObjetoNaPrensa();
-        botaoConfirmar.interactable = temObjeto;
-        botaoEnviar.interactable = temObjeto;
     }
 
     public void FecharUI()
@@ -107,31 +113,31 @@ public class PainelPrensa : MonoBehaviour
         if (prensa.PontoDoObjeto == null) { Debug.LogWarning("[Enviar] PontoDoObjeto não referenciado."); return; }
         if (!prensa.PontoDoObjeto.Ocupado) { Debug.LogWarning("[Enviar] Nenhum objeto no ponto."); return; }
 
-        Transform obj = prensa.PontoDoObjeto.LiberarObjeto();
-        if (obj == null) { Debug.LogWarning("[Enviar] LiberarObjeto retornou null."); return; }
-
-        Debug.Log($"[Enviar] Enviando objeto: {obj.name}");
-        StartCoroutine(AcelerarParaEsteira(obj));
+        StartCoroutine(SequenciaEnviar());
         FecharUI();
     }
 
-    IEnumerator AcelerarParaEsteira(Transform obj)
+    IEnumerator SequenciaEnviar()
     {
+        yield return prensa.Levantar();
+
+        Transform obj = prensa.PontoDoObjeto.LiberarObjeto();
+        if (obj == null) { Debug.LogWarning("[Enviar] LiberarObjeto retornou null."); yield break; }
+
+        if (destino == null) { Debug.LogWarning("[Enviar] Destino não definido no Inspector."); yield break; }
+
         Rigidbody rb = obj.GetComponent<Rigidbody>();
-        if (rb == null) { Debug.LogWarning("[Enviar] Objeto não tem Rigidbody."); yield break; }
+        if (rb == null) { Debug.LogWarning("[Enviar] Objeto sem Rigidbody."); yield break; }
 
         rb.isKinematic = false;
-        Debug.Log($"[Enviar] Acelerando {obj.name} para Z={velocidadeEsteira}");
+        yield return new WaitForFixedUpdate(); // aguarda physics aceitar o estado não-kinematic
 
-        while (rb.linearVelocity.z < velocidadeEsteira)
-        {
-            float vz = Mathf.MoveTowards(rb.linearVelocity.z, velocidadeEsteira, aceleracaoEsteira * Time.deltaTime);
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y, vz);
-            yield return null;
-        }
+        Vector3 dir = destino.position - obj.position;
+        dir.y = 0f;
+        dir = dir.normalized;
 
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y, velocidadeEsteira);
-        Debug.Log("[Enviar] Velocidade final atingida.");
+        rb.linearVelocity = dir * velocidadeEsteira;
+        Debug.Log($"[Enviar] {obj.name} lançado na direção {dir} com velocidade {velocidadeEsteira}");
     }
 
     void AtualizarTexto()

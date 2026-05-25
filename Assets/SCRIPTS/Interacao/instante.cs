@@ -7,6 +7,9 @@ public class instante : MonoBehaviour
     public Image imagemNoCanvas;
     public Sprite imagemDoLivro;
 
+    [Header("Teste")]
+    [SerializeField] private bool modoTeste = false;
+
     private void OnMouseDown()
     {
         Interagir();
@@ -14,7 +17,7 @@ public class instante : MonoBehaviour
 
     public void Interagir()
     {
-        if (BasicSpawner.PapelLocal != PapelJogador.Inteligencia)
+        if (!modoTeste && BasicSpawner.PapelLocal != PapelJogador.Inteligencia)
         {
             FeedbackUI.Mostrar("Você não consegue entender essa leitura.");
             return;

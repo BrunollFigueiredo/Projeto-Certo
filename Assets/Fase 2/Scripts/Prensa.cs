@@ -21,6 +21,15 @@ public class Prensa : MonoBehaviour
         posicaoFinal = posicaoInicial - new Vector3(0f, distanciaDescida, 0f);
     }
 
+    public IEnumerator Levantar()
+    {
+        while (emMovimento) yield return null;
+        if (Vector3.Distance(transform.position, posicaoInicial) > 0.01f)
+            yield return Mover(posicaoInicial);
+        ativada = false;
+        emMovimento = false;
+    }
+
     public void Ativar(Vector3 escalaAlvo)
     {
         if (ativada || emMovimento) return;
