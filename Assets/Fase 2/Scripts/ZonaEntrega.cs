@@ -3,81 +3,107 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-
+// Recebe os objetos prensados e conta quantos de cada tamanho foram entregues
 public class ZonaEntrega : NetworkBehaviour
 {
-    [Header("Requisitos (tamanho certo)")]
-    [SerializeField] private int necessarioPequeno = 2;
-    [SerializeField] private int necessarioMedio   = 3;
-    [SerializeField] private int necessarioGrande  = 1;
+    [SerializeField] private int necessarioPequeno = 2; // Quantos pequenos precisam ser entregues
+    [SerializeField] private int necessarioMedio = 3;   // Quantos médios precisam ser entregues
+    [SerializeField] private int necessarioGrande = 1;  // Quantos grandes precisam ser entregues
 
-    [Header("Limites de escala")]
-    [SerializeField] private float limiteMaxPequeno = 0.75f;
-    [SerializeField] private float limiteMaxMedio   = 1.25f;
+    [SerializeField] private float limiteMaxPequeno = 0.75f; // Tamanho máximo para ser considerado pequeno
+    [SerializeField] private float limiteMaxMedio = 1.25f;   // Tamanho máximo para ser considerado médio
 
-    [Header("Porta")]
-    [SerializeField] private GameObject porta;
-    [SerializeField] private float posicaoZPortaAberta = -9.5f;
+    [SerializeField] private GameObject porta;                // Porta que abre quando tudo é entregue
+    [SerializeField] private float posicaoZPortaAberta = -9.5f; // Posição Z final da porta
 
-    [Header("UI")]
-    [SerializeField] private Image barraPreenchimento;
-    [SerializeField] private TextMeshProUGUI textoPequeno;
-    [SerializeField] private TextMeshProUGUI textoMedio;
-    [SerializeField] private TextMeshProUGUI textoGrande;
+    [SerializeField] private Image barraPreenchimento;        // Barra de progresso da UI
+    [SerializeField] private TextMeshProUGUI textoPequeno;    // Texto contador dos pequenos
+    [SerializeField] private TextMeshProUGUI textoMedio;      // Texto contador dos médios
+    [SerializeField] private TextMeshProUGUI textoGrande;     // Texto contador dos grandes
 
+    // Contadores sincronizados em rede
     [Networked] private int entregasPequeno { get; set; }
-    [Networked] private int entregasMedio   { get; set; }
-    [Networked] private int entregasGrande  { get; set; }
-    [Networked] private bool portaAberta    { get; set; }
+    [Networked] private int entregasMedio { get; set; }
+    [Networked] private int entregasGrande { get; set; }
+    [Networked] private bool portaAberta { get; set; }
 
-    private int TotalEntregues =>
-        Mathf.Min(entregasPequeno, necessarioPequeno) +
-        Mathf.Min(entregasMedio,   necessarioMedio)   +
-        Mathf.Min(entregasGrande,  necessarioGrande);
-
-    private int Total => necessarioPequeno + necessarioMedio + necessarioGrande;
-
+    // Atualiza a UI todo frame
     public override void Render()
     {
-        if (barraPreenchimento != null)
-            barraPreenchimento.fillAmount = Total > 0 ? (float)TotalEntregues / Total : 0f;
+        // Calcula o total de entregas válidas (sem passar do necessário)
+        int total = necessarioPequeno + necessarioMedio + necessarioGrande;
+        int totalEntregues = Mathf.Min(entregasPequeno, necessarioPequeno)
+                           + Mathf.Min(entregasMedio, necessarioMedio)
+                           + Mathf.Min(entregasGrande, necessarioGrande);
 
+        // Atualiza a barra de preenchimento
+        if (barraPreenchimento != null)
+        {
+            if (total > 0)
+            {
+                barraPreenchimento.fillAmount = (float)totalEntregues / total;
+            }
+            else
+            {
+                barraPreenchimento.fillAmount = 0f;
+            }
+        }
+
+        // Atualiza os textos com o progresso de cada tamanho
         if (textoPequeno != null)
-            textoPequeno.text = $"P: {Mathf.Min(entregasPequeno, necessarioPequeno)}/{necessarioPequeno}";
+        {
+            textoPequeno.text = "P: " + Mathf.Min(entregasPequeno, necessarioPequeno) + "/" + necessarioPequeno;
+        }
         if (textoMedio != null)
-            textoMedio.text = $"M: {Mathf.Min(entregasMedio, necessarioMedio)}/{necessarioMedio}";
+        {
+            textoMedio.text = "M: " + Mathf.Min(entregasMedio, necessarioMedio) + "/" + necessarioMedio;
+        }
         if (textoGrande != null)
-            textoGrande.text = $"G: {Mathf.Min(entregasGrande, necessarioGrande)}/{necessarioGrande}";
+        {
+            textoGrande.text = "G: " + Mathf.Min(entregasGrande, necessarioGrande) + "/" + necessarioGrande;
+        }
     }
 
+    // Chamado quando um objeto entra na zona de entrega
     private void OnTriggerEnter(Collider other)
     {
+        // Só aceita objetos com a tag "Pegavel"
         if (!other.CompareTag("Pegavel")) return;
 
+        // Destrói o objeto entregue
         Destroy(other.gameObject);
 
+        // Só o host atualiza os contadores
         if (!HasStateAuthority) return;
 
+        // Classifica pelo tamanho da escala
         float escala = other.transform.localScale.x;
+
         if (escala <= limiteMaxPequeno)
+        {
             entregasPequeno++;
+        }
         else if (escala <= limiteMaxMedio)
+        {
             entregasMedio++;
+        }
         else
+        {
             entregasGrande++;
+        }
 
-        Debug.Log($"[ZonaEntrega] escala={escala:0.##} | P={entregasPequeno} M={entregasMedio} G={entregasGrande}");
-
+        // Se já entregou tudo, abre a porta
         if (!portaAberta
             && entregasPequeno >= necessarioPequeno
-            && entregasMedio   >= necessarioMedio
-            && entregasGrande  >= necessarioGrande)
+            && entregasMedio >= necessarioMedio
+            && entregasGrande >= necessarioGrande)
         {
             portaAberta = true;
             RPC_AbrirPorta();
         }
     }
 
+    // RPC: move a porta para a posição aberta em todos os clientes
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_AbrirPorta()
     {

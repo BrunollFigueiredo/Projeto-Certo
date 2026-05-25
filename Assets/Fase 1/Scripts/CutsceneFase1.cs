@@ -4,8 +4,10 @@ using UnityEngine.UI;
 using TMPro;
 using Fusion;
 
+// Mostra a cutscene de introdução da Fase 1 sincronizada entre os jogadores
 public class CutsceneFase1 : NetworkBehaviour
 {
+    // Representa um slide de texto da cutscene
     [System.Serializable]
     public class Slide
     {
@@ -13,7 +15,7 @@ public class CutsceneFase1 : NetworkBehaviour
         public string texto;
     }
 
-    [Header("Conteúdo")]
+    // Lista de slides que vão ser mostrados em ordem
     [SerializeField] private Slide[] slides = new Slide[]
     {
         new Slide { texto = "— Boas-vindas —\n\nCandidatos.\n\nSejam bem-vindos à Torre." },
@@ -27,151 +29,203 @@ public class CutsceneFase1 : NetworkBehaviour
         new Slide { texto = "Encontrem a sequência. Acionem o painel. O portão se abrirá.\n\nO tempo começa agora." },
     };
 
-    [Header("UI")]
-    [SerializeField] private GameObject painelCutscene;
-    [SerializeField] private TextMeshProUGUI textoNarrador;
-    [SerializeField] private Button botaoProximo;
-    [SerializeField] private TextMeshProUGUI textoBotaoProximo;
+    [SerializeField] private GameObject painelCutscene;          // Painel preto com o texto da narração
+    [SerializeField] private TextMeshProUGUI textoNarrador;      // Texto que aparece letra por letra
+    [SerializeField] private Button botaoProximo;                // Botão para avançar o slide
+    [SerializeField] private TextMeshProUGUI textoBotaoProximo;  // Texto dentro do botão (Próximo/Começar)
+    [SerializeField] private Camera cameraCutscene;              // Câmera fixa usada durante a cutscene
+    [SerializeField] private GameObject[] controlesMobile;       // Joystick e botão de pulo (ficam ocultos)
+    [SerializeField] [Range(0.01f, 0.1f)] private float velocidadeDigitacao = 0.03f; // Tempo entre cada letra
 
-    [Header("Câmera")]
-    [SerializeField] private Camera cameraCutscene;
+    [Networked] private int slideAtual { get; set; }  // Slide atual sincronizado entre os jogadores
 
-    [Header("Controles (desativados durante a cutscene)")]
-    [SerializeField] private GameObject[] controlesMobile;
+    public static bool Ativa { get; private set; } = false; // Flag global para outros scripts saberem que a cutscene está rolando
 
-    [Header("Configuração")]
-    [SerializeField] [Range(0.01f, 0.1f)] private float velocidadeDigitacao = 0.03f;
-
-    [Networked] private int slideAtual { get; set; }
-
-    public static bool Ativa { get; private set; } = false;
-
-    private ChangeDetector _changes;
-    private Coroutine _coroutineDigitacao;
-    private int _ultimoSlideExibido = -1;
+    private ChangeDetector _changes;            // Detecta mudanças nas variáveis [Networked]
+    private Coroutine _coroutineDigitacao;      // Referência da animação de digitar atual
+    private int _ultimoSlideExibido = -1;       // Evita exibir o mesmo slide duas vezes
 
     private void Awake()
     {
+        // Marca a cutscene como ativa antes mesmo do Spawned para que o Player já saiba
         Ativa = true;
     }
 
     public override void Spawned()
     {
+        // Configura o detector de mudanças nas variáveis sincronizadas
         _changes = GetChangeDetector(ChangeDetector.Source.SimulationState);
 
+        // Só o host inicia o slide no 0
         if (HasStateAuthority)
+        {
             slideAtual = 0;
+        }
 
+        // Mostra o painel da cutscene e esconde o botão de avançar
         painelCutscene.SetActive(true);
         botaoProximo.gameObject.SetActive(false);
 
-        foreach (var controle in controlesMobile)
-            if (controle != null) controle.SetActive(false);
+        // Esconde os controles mobile durante a cutscene
+        for (int i = 0; i < controlesMobile.Length; i++)
+        {
+            if (controlesMobile[i] != null)
+            {
+                controlesMobile[i].SetActive(false);
+            }
+        }
 
-        // Desliga a câmera principal da cena para não renderizar junto com a cutscene
+        // Desliga a câmera principal e liga a câmera da cutscene
         Camera mainCam = Camera.main;
         if (mainCam != null && mainCam != cameraCutscene)
+        {
             mainCam.gameObject.SetActive(false);
+        }
 
         if (cameraCutscene != null)
+        {
             cameraCutscene.gameObject.SetActive(true);
+        }
 
+        // Exibe o primeiro slide
         MostrarSlideLocal(slideAtual);
     }
 
     public override void Render()
     {
+        // Quando o slide muda no host, atualiza nos clientes
         foreach (var change in _changes.DetectChanges(this))
         {
             if (change == nameof(slideAtual))
+            {
                 MostrarSlideLocal(slideAtual);
+            }
         }
     }
 
+    // Mostra um slide específico na tela local
     void MostrarSlideLocal(int index)
     {
+        // Não repete o mesmo slide
         if (index == _ultimoSlideExibido) return;
         _ultimoSlideExibido = index;
 
+        // Cancela a animação anterior se ainda estiver rodando
         if (_coroutineDigitacao != null)
+        {
             StopCoroutine(_coroutineDigitacao);
+        }
 
         botaoProximo.gameObject.SetActive(false);
         textoNarrador.text = "";
 
+        // Inicia a animação de digitar o texto do slide
         if (index < slides.Length)
+        {
             _coroutineDigitacao = StartCoroutine(Digitar(slides[index].texto, index));
+        }
     }
 
+    // Animação que faz o texto aparecer letra por letra
     IEnumerator Digitar(string texto, int indexSlide)
     {
-        foreach (char c in texto)
+        for (int i = 0; i < texto.Length; i++)
         {
-            textoNarrador.text += c;
+            textoNarrador.text += texto[i];
             yield return new WaitForSeconds(velocidadeDigitacao);
         }
 
+        // Quando termina, mostra o botão de avançar com o texto certo
         bool ultimo = indexSlide >= slides.Length - 1;
+
         if (textoBotaoProximo != null)
-            textoBotaoProximo.text = ultimo ? "Começar" : "Próximo >";
+        {
+            if (ultimo)
+            {
+                textoBotaoProximo.text = "Começar";
+            }
+            else
+            {
+                textoBotaoProximo.text = "Próximo >";
+            }
+        }
 
         botaoProximo.gameObject.SetActive(true);
     }
 
+    // Chamado pelo botão Próximo/Começar
     public void AvancarSlide()
     {
         botaoProximo.gameObject.SetActive(false);
 
+        // O host avança direto, os clientes pedem via RPC
         if (HasStateAuthority)
+        {
             ProcessarAvanco();
+        }
         else
+        {
             RPC_PedirAvanco();
+        }
     }
 
+    // RPC: cliente pede ao host para avançar o slide
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    void RPC_PedirAvanco() => ProcessarAvanco();
+    void RPC_PedirAvanco()
+    {
+        ProcessarAvanco();
+    }
 
+    // Avança o slide ou termina a cutscene se for o último
     void ProcessarAvanco()
     {
         int proximo = slideAtual + 1;
+
         if (proximo >= slides.Length)
+        {
             RPC_TerminarCutscene();
+        }
         else
+        {
             slideAtual = proximo;
+        }
     }
 
+    // RPC: avisa todos para encerrar a cutscene
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     void RPC_TerminarCutscene()
     {
         TerminarCutsceneLocal();
     }
 
+    // Encerra a cutscene na tela local (esconde painel, religa controles e câmera do jogador)
     void TerminarCutsceneLocal()
     {
         Ativa = false;
         painelCutscene.SetActive(false);
 
+        // Desliga a câmera da cutscene
         if (cameraCutscene != null)
-            cameraCutscene.gameObject.SetActive(false);
-
-        Debug.Log($"[Cutscene] Reativando {controlesMobile.Length} controles.");
-        foreach (var controle in controlesMobile)
         {
-            if (controle != null)
+            cameraCutscene.gameObject.SetActive(false);
+        }
+
+        // Religa os controles mobile
+        for (int i = 0; i < controlesMobile.Length; i++)
+        {
+            if (controlesMobile[i] != null)
             {
-                controle.SetActive(true);
-                Debug.Log($"[Cutscene] Reativou: {controle.name}");
+                controlesMobile[i].SetActive(true);
             }
         }
 
+        // Ativa as câmeras dos personagens
         Player.AtivarCamerasJogadores();
-
-        // TODO: Inicie o timer aqui quando ele existir
-        // Exemplo: GerenciadorTempo.Instance?.IniciarTimer();
     }
 
     private void OnDestroy()
     {
+        // Garante que a flag fique falsa quando a cena terminar
         Ativa = false;
     }
 }
