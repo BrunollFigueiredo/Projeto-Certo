@@ -23,8 +23,8 @@ public class CutsceneAbertura : MonoBehaviour
         new Slide { texto = "Décadas depois, uma Torre surgiu entre os dois reinos. Ninguém sabe quem a construiu. Ninguém viu o início da obra. Um dia ela simplesmente estava lá." },
         new Slide { texto = "Um mensageiro chegou aos dois reinos com a mesma proposta. Qualquer candidato que chegasse ao topo poderia negociar benefícios para o próprio povo." },
         new Slide { texto = "Umbra escolheu Kofi. Auris escolheu Aldric. Os dois cruzaram a porta da Torre carregando o peso da história dos próprios povos." },
-        new Slide { texto = "Candidatos. Meu nome não importa, mas podem me chamar de Arquiteto. Fui eu quem trouxe vocês até aqui." },
-        new Slide { texto = "E serei eu quem vai acompanhar cada passo de vocês até o topo. Se é que chegarem lá." },
+        new Slide { texto = "'Candidatos. Meu nome não importa, mas podem me chamar de Arquiteto.' 'Fui eu quem trouxe vocês até aqui.'" },
+        new Slide { texto = "'E serei eu quem vai acompanhar cada passo de vocês até o topo. Se é que chegarem lá.'" },
     };
 
     [SerializeField] private GameObject painelCutscene;

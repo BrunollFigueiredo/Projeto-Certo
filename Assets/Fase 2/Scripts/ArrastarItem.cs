@@ -12,7 +12,7 @@ public class ArrastarItem : MonoBehaviour
     private Camera cam;                 // Câmera usada no raycast
     private bool segurandoEsteObjeto = false; // Se este objeto está nas minhas mãos
     private Rigidbody rb;               // Rigidbody do objeto
-    private float tempoCooldown = 0f;   // Tempo até poder pegar de novo após soltar
+    private float tempoCooldown = 4f;   // Tempo até poder pegar de novo após soltar
 
     void Start()
     {
