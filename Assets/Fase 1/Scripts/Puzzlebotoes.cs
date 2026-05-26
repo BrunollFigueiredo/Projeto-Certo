@@ -90,7 +90,7 @@ public class Puzzlebotoes : NetworkBehaviour
             if (Porta != null)
             {
                 Vector3 pos = Porta.transform.position;
-                pos.z = -9.5f;
+                pos.y = 27f;
                 Porta.transform.position = pos;
             }
         }
