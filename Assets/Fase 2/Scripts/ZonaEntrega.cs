@@ -109,9 +109,7 @@ public class ZonaEntrega : NetworkBehaviour
     {
         if (porta != null)
         {
-            Vector3 pos = porta.transform.position;
-            pos.y = posicaoZPortaAberta;
-            porta.transform.position = pos;
+            porta.transform.Translate(0, 15, 0);
         }
     }
 }
