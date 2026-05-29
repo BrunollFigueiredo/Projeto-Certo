@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
 // Permite pegar, segurar na mão e soltar objetos (encaixando ou jogando)
@@ -13,7 +14,10 @@ public class ArrastarItem : MonoBehaviour
     private bool segurandoEsteObjeto = false; // Se este objeto está nas minhas mãos
     private Rigidbody rb;               // Rigidbody do objeto
     private float tempoCooldown = 4f;   // Tempo até poder pegar de novo após soltar
-
+    public float maxTimeBetweenTaps = 0.3f;
+    private int tapCount = 0;
+    private float lastTapTime = 0;
+    public UnityEvent onDoubleTap;
     void Start()
     {
         // Configura o Rigidbody para evitar bugs de colisão e rotação
@@ -68,15 +72,44 @@ public class ArrastarItem : MonoBehaviour
         if (segurandoEsteObjeto)
         {
             AtualizarPosicaoNaMao();
-
-            Vector2 ignorada;
-            if (DetectouToque(out ignorada))
-            {
-                SoltarObjeto();
-            }
-            return;
         }
+        if (Input.touchCount > 0)
+        {
 
+            Touch touch = Input.GetTouch(0);
+
+            if (touch.phase == TouchPhase.Began)
+            {
+
+                if (Time.time - lastTapTime < maxTimeBetweenTaps)
+                {
+
+                    tapCount++;
+                    if (tapCount == 2)
+                    {
+
+                        //onDoubleTap.Invoke(); // Dispara o evento
+
+                        Debug.Log("Toque duplo");
+                        SoltarObjeto();
+                        tapCount = 0; // Reseta o contador
+
+                    }
+
+                }
+
+                else
+                {
+
+                    tapCount = 1; // Primeiro toque
+
+                }
+
+                lastTapTime = Time.time;
+
+            }
+
+        }
         // Não tenta pegar se está em cooldown, se já tem alguém segurando ou se a tag não bate
         if (tempoCooldown > 0f) return;
         if (objetoSendoSeguro != null) return;
