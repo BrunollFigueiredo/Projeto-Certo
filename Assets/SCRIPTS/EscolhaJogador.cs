@@ -21,13 +21,13 @@ public class EscolhaJogador : MonoBehaviour
     public void EscolherJogador1()
     {
         if (escolheu) return;
-        Confirmar("Forca", marcadorJogador1);
+        Confirmar("Kofi", marcadorJogador1);
     }
 
     public void EscolherJogador2()
     {
         if (escolheu) return;
-        Confirmar("Inteligencia", marcadorJogador2);
+        Confirmar("Aldric", marcadorJogador2);
     }
 
     void Confirmar(string papel, GameObject marcador)

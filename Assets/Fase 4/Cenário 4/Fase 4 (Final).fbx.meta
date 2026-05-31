@@ -3,7 +3,67 @@ guid: aedc88899e8183a468f1032feabf51a6
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Caixa_Madeira
+    second: {fileID: 2100000, guid: f52a719d2161bbf4aa27f097e91d5491, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "Caixa_M\xE1rmore"
+    second: {fileID: 2100000, guid: a04303077b7f0ea4d9cad6ca606e973f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "Ch\xE3o_Cer\xE2mica"
+    second: {fileID: 2100000, guid: ecf6b659f508dd64c8bebe51b325912c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.001
+    second: {fileID: 2100000, guid: 271dfa0b3e0d11047b4ad17946d0df7a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.004
+    second: {fileID: 2100000, guid: afd723ded486cea46a0b37db2533a47a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.017
+    second: {fileID: 2100000, guid: 4c669c9fafad6e34ba1483e3284a73e1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material.035
+    second: {fileID: 2100000, guid: 53a2c4b28dc16a94a81ba948af30e5f6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "Parede_M\xE1rmore"
+    second: {fileID: 2100000, guid: 207377caf4f39314091425863111f1c0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "Pilar_M\xE1rmore"
+    second: {fileID: 2100000, guid: 6e7480f35732a1946a1f428ca5fb3569, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Plataforma_Metal
+    second: {fileID: 2100000, guid: fb01f10309744b9448883190dfce7ceb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Porta_Metal
+    second: {fileID: 2100000, guid: 98fa0cf1036e43d4086c0ae1cd125dd2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "T\xE1buas_Madeira"
+    second: {fileID: 2100000, guid: f72dc2f450f82854892cc50a6b174beb, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

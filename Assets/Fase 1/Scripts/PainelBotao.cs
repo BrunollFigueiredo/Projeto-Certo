@@ -28,8 +28,8 @@ public class PainelBotao : MonoBehaviour
     // Chamado quando o jogador clica no botão
     void OnMouseDown()
     {
-        // Só o jogador da Força pode pressionar
-        if (BasicSpawner.PapelLocal != PapelJogador.Forca)
+        // Só o Kofi pode pressionar os botões do painel
+        if (BasicSpawner.PersonagemLocal != Personagem.Kofi)
         {
             FeedbackUI.Mostrar("Você não tem força suficiente para pressionar isso.");
             return;

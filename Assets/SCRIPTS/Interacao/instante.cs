@@ -17,7 +17,7 @@ public class instante : MonoBehaviour
 
     public void Interagir()
     {
-        if (!modoTeste && BasicSpawner.PapelLocal != PapelJogador.Inteligencia)
+        if (!modoTeste && BasicSpawner.PersonagemLocal != Personagem.Aldric)
         {
             FeedbackUI.Mostrar("Você não consegue entender essa leitura.");
             return;

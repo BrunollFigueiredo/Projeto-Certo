@@ -18,7 +18,7 @@ public struct NetworkInputData : INetworkInput
     public NetworkButtons buttons;
 }
 
-public enum PapelJogador { Forca, Inteligencia }
+public enum Personagem { Kofi, Aldric }
 
 public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 {
@@ -30,7 +30,9 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     public static float YawInput;
     public static float PitchInput;
 
-    public static PapelJogador PapelLocal { get; private set; } = PapelJogador.Forca;
+    // Personagem do jogador local. Definido pelo Player local quando ele nasce
+    // (e ajustado se houver conflito), por isso o setter é público.
+    public static Personagem PersonagemLocal { get; set; } = Personagem.Kofi;
     public static int JogadoresConectados { get; private set; } = 0;
 
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
@@ -38,8 +40,22 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
     private void Start()
     {
+        // Zera o estado estático para que ele não vaze entre cenas/sessões.
+        // (statics sobrevivem ao recarregar a cena; sem isso o contador e o
+        // olhar acumulam valores antigos quando uma nova fase começa.)
+        ResetarEstadoEstatico();
+
         if (_runner == null)
             StartGame(GameMode.Shared);
+    }
+
+    private static void ResetarEstadoEstatico()
+    {
+        JogadoresConectados = 0;
+        TouchMoveInput = Vector2.zero;
+        JumpPressed = false;
+        YawInput = 0f;
+        PitchInput = 0f;
     }
 
     public void OnInput(NetworkRunner runner, NetworkInput input)
@@ -64,19 +80,8 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
         if (player == runner.LocalPlayer)
         {
-            string papelSalvo = PlayerPrefs.GetString("PapelEscolhido", "");
-            if (papelSalvo == "Forca")
-                PapelLocal = PapelJogador.Forca;
-            else if (papelSalvo == "Inteligencia")
-                PapelLocal = PapelJogador.Inteligencia;
-            else
-            {
-                int outrosJogadores = 0;
-                foreach (var p in runner.ActivePlayers)
-                    if (p != runner.LocalPlayer) outrosJogadores++;
-                PapelLocal = outrosJogadores == 0 ? PapelJogador.Forca : PapelJogador.Inteligencia;
-            }
-
+            // O personagem (Kofi/Aldric) é resolvido pelo próprio Player ao nascer,
+            // já com checagem de unicidade na rede. Ver Player.cs.
             Vector3 posicao = pontoDeSpawn != null ? pontoDeSpawn.position : transform.position;
             Quaternion rotacao = pontoDeSpawn != null ? pontoDeSpawn.rotation : transform.rotation;
             runner.Spawn(_playerPrefab, posicao, rotacao, player);

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 public class Player : NetworkBehaviour
@@ -8,6 +9,13 @@ public class Player : NetworkBehaviour
     public static Camera LocalCamera { get; private set; }
 
     public static event System.Action SolicitarAtivarCamera;
+
+    // Personagem (Kofi/Aldric) sincronizado na rede. Escrito apenas pelo dono do objeto.
+    [Networked] public Personagem PersonagemAtual { get; set; }
+
+    // Registro local de todos os Players conhecidos nesta máquina (local + proxies).
+    // Usado para resolver conflito de personagem entre os jogadores.
+    private static readonly List<Player> _todosJogadores = new List<Player>();
 
     public static void AtivarCamerasJogadores()
     {
@@ -29,8 +37,18 @@ public class Player : NetworkBehaviour
 
     public override void Spawned()
     {
+        _todosJogadores.Add(this);
+
+        // No modo Shared, quem dá Spawn é dono (State + Input Authority) do próprio
+        // objeto, então define o personagem inicial a partir da escolha salva.
+        if (HasStateAuthority)
+        {
+            PersonagemAtual = LerPreferenciaPersonagem();
+        }
+
         if (HasInputAuthority)
         {
+            BasicSpawner.PersonagemLocal = PersonagemAtual;
             LocalTransform = transform;
             LocalPontoMao = pontoMao;
             LocalCamera = cameraHolder != null ? cameraHolder.GetComponentInChildren<Camera>() : Camera.main;
@@ -66,6 +84,8 @@ public class Player : NetworkBehaviour
 
     private void OnDestroy()
     {
+        _todosJogadores.Remove(this);
+
         if (HasInputAuthority)
         {
             SolicitarAtivarCamera -= AtivarCamera;
@@ -76,8 +96,48 @@ public class Player : NetworkBehaviour
         }
     }
 
+    // Lê a escolha feita na tela de seleção. Default: Kofi.
+    private static Personagem LerPreferenciaPersonagem()
+    {
+        return PlayerPrefs.GetString("PapelEscolhido", "") == "Aldric"
+            ? Personagem.Aldric
+            : Personagem.Kofi;
+    }
+
+    // Garante que os dois jogadores não fiquem com o mesmo personagem.
+    // Regra determinística: em caso de empate, quem tem o PlayerId menor mantém
+    // a preferência e o outro recebe o personagem restante. Converge em um tick.
+    private void ResolverConflitoPersonagem()
+    {
+        foreach (var outro in _todosJogadores)
+        {
+            if (outro == this || outro == null || !outro.Object) continue;
+
+            if (outro.PersonagemAtual == PersonagemAtual &&
+                outro.Object.InputAuthority.PlayerId < Object.InputAuthority.PlayerId)
+            {
+                PersonagemAtual = PersonagemAtual == Personagem.Kofi
+                    ? Personagem.Aldric
+                    : Personagem.Kofi;
+                break;
+            }
+        }
+    }
+
+    public override void Render()
+    {
+        // Mantém o estático local em sincronia com o personagem resolvido na rede.
+        if (HasInputAuthority)
+            BasicSpawner.PersonagemLocal = PersonagemAtual;
+    }
+
     public override void FixedUpdateNetwork()
     {
+        // Só o dono do objeto escreve o próprio personagem; roda sempre,
+        // inclusive durante a cutscene, para já entrar na fase sem conflito.
+        if (HasStateAuthority)
+            ResolverConflitoPersonagem();
+
         if (_cc == null) return;
         if (CutsceneFase1.Ativa) return;
 
