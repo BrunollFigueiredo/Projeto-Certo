@@ -393,6 +393,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: edf0dd88e03c575498726393cfa053e3, type: 3}
       insertIndex: -1
       addedObject: {fileID: -4807961208294497332}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: edf0dd88e03c575498726393cfa053e3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 757602721572463256}
     - targetCorrespondingSourceObject: {fileID: 7036213049465896255, guid: edf0dd88e03c575498726393cfa053e3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1459350116893762482}
@@ -461,6 +464,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: feb6f4a1d6cffed4b8bfacf9c4c3d111, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _PersonagemAtual: 0
   speed: 15
   cameraHolder: {fileID: 4716404811455751154}
   pontoMao: {fileID: 3903366465562760254}
@@ -535,6 +539,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &757602721572463256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2307512014272579098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f7ede6d2055a0a45917941f86a714ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &3120499070567292064 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: edf0dd88e03c575498726393cfa053e3, type: 3}

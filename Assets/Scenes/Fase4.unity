@@ -2060,8 +2060,61 @@ Transform:
   m_GameObject: {fileID: 914788841}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 30.18, z: 0}
+  m_LocalPosition: {x: 0, y: 30.18, z: 437.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &935773473
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 935773475}
+  - component: {fileID: 935773474}
+  m_Layer: 0
+  m_Name: Buraco
+  m_TagString: Fall
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &935773474
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 935773473}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.9918468, y: 1, z: 4.305956}
+  m_Center: {x: 0.013769073, y: 0, z: 0.31559935}
+--- !u!4 &935773475
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 935773473}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.25248, y: -40.1, z: 551}
+  m_LocalScale: {x: 50, y: 5, z: 50}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -4946,14 +4999,15 @@ SceneRoots:
   - {fileID: 1699852634}
   - {fileID: 898341175}
   - {fileID: 1565975212}
-  - {fileID: 244148412}
   - {fileID: 2020862849}
+  - {fileID: 58775357}
+  - {fileID: 244148412}
   - {fileID: 1860355875}
   - {fileID: 19158147}
   - {fileID: 729966516}
   - {fileID: 970899398}
-  - {fileID: 58775357}
   - {fileID: 1574866521}
   - {fileID: 687765892}
   - {fileID: 1817050103}
   - {fileID: 243436887}
+  - {fileID: 935773475}
