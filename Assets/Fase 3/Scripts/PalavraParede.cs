@@ -38,9 +38,13 @@ public class PalavraParede : NetworkBehaviour
         {
             if (change == nameof(Acesa))
             {
+                Debug.Log($"[PalavraParede] Acesa mudou para {Acesa} na palavra {palavraId}");
                 AtualizarVisual();
                 if (Acesa)
+                {
+                    Debug.Log($"[PalavraParede] Disparando OnPalavraAcendida — subscribers: {OnPalavraAcendida?.GetInvocationList().Length ?? 0}");
                     OnPalavraAcendida?.Invoke(palavraId);
+                }
             }
         }
 
@@ -68,6 +72,7 @@ public class PalavraParede : NetworkBehaviour
             return;
         }
 
+        Debug.Log($"[PalavraParede] Clicou na palavra id={palavraId}");
         RPC_Acender();
     }
 

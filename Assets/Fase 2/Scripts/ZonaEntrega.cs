@@ -70,10 +70,9 @@ public class ZonaEntrega : NetworkBehaviour
         // Só aceita objetos com a tag "Pegavel"
         if (!other.CompareTag("Pegavel")) return;
 
-        // Destrói o objeto entregue
-        Destroy(other.gameObject);
-
-        // Só o host atualiza os contadores
+        // Só o host processa a entrega e remove o objeto. Remover um
+        // NetworkObject fora do dono causa erro no Fusion, por isso só
+        // o StateAuthority age aqui — o Despawn sincroniza para todos.
         if (!HasStateAuthority) return;
 
         // Classifica pelo tamanho da escala
@@ -90,6 +89,17 @@ public class ZonaEntrega : NetworkBehaviour
         else
         {
             entregasGrande++;
+        }
+
+        // Remove o objeto entregue de forma sincronizada
+        NetworkObject netObj = other.GetComponent<NetworkObject>();
+        if (netObj != null)
+        {
+            Runner.Despawn(netObj);
+        }
+        else
+        {
+            Destroy(other.gameObject);
         }
 
         // Se já entregou tudo, abre a porta

@@ -13,11 +13,17 @@ public class Puzzlebotoes : NetworkBehaviour
     private List<int> sequenciaJogador = new List<int>(); // O que o jogador apertou até agora
     private bool processando = false;                     // Trava enquanto verifica o resultado
 
-    // Chamado quando um botão é pressionado pelo jogador
+    // Chamado localmente quando um botão é pressionado pelo jogador.
+    // Encaminha para o StateAuthority via RPC (no Shared Mode, qualquer
+    // cliente pode ser o dono do objeto, então não dá para processar local).
     public void TenteiPressionar(int idDoBotaoClicado)
     {
-        // Só o jogador com autoridade processa a lógica
-        if (!HasStateAuthority) return;
+        RPC_TenteiPressionar(idDoBotaoClicado);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_TenteiPressionar(int idDoBotaoClicado)
+    {
         if (processando) return;
         // Ignora se já apertou esse botão antes
         if (sequenciaJogador.Contains(idDoBotaoClicado)) return;

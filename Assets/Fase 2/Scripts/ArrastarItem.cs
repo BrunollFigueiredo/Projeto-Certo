@@ -1,3 +1,4 @@
+using Fusion;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -13,6 +14,7 @@ public class ArrastarItem : MonoBehaviour
     private Camera cam;                 // Câmera usada no raycast
     private bool segurandoEsteObjeto = false; // Se este objeto está nas minhas mãos
     private Rigidbody rb;               // Rigidbody do objeto
+    private NetworkObject netObj;       // NetworkObject do item (se for em rede)
     private float tempoCooldown = 4f;   // Tempo até poder pegar de novo após soltar
     public float maxTimeBetweenTaps = 0.3f;
     private int tapCount = 0;
@@ -22,6 +24,7 @@ public class ArrastarItem : MonoBehaviour
     {
         // Configura o Rigidbody para evitar bugs de colisão e rotação
         rb = GetComponent<Rigidbody>();
+        netObj = GetComponent<NetworkObject>();
 
         if (rb != null)
         {
@@ -191,6 +194,13 @@ public class ArrastarItem : MonoBehaviour
     {
         segurandoEsteObjeto = true;
         objetoSendoSeguro = this;
+
+        // Pede a autoridade do objeto na rede para que mover a posição
+        // sincronize para o outro jogador via NetworkTransform.
+        if (netObj != null && !netObj.HasStateAuthority)
+        {
+            netObj.RequestStateAuthority();
+        }
 
         if (rb != null)
         {

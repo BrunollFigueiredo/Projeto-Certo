@@ -18,13 +18,21 @@ public class PhaseTimer : NetworkBehaviour
         if (HasStateAuthority)
         {
             tempoRestante = tempoTotal;
-            rodando = true;
+            rodando = false;
         }
     }
 
     public override void FixedUpdateNetwork()
     {
-        if (!HasStateAuthority || !rodando) return;
+        if (!HasStateAuthority) return;
+
+        // Começa automaticamente quando a cutscene terminar
+        if (!rodando && !CutsceneFase1.Ativa && tempoRestante > 0f)
+        {
+            rodando = true;
+        }
+
+        if (!rodando) return;
 
         tempoRestante -= Runner.DeltaTime;
         if (tempoRestante <= 0f)

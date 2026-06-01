@@ -33,11 +33,7 @@ public class MirrorWallController : NetworkBehaviour
     private void HandlePalavraAcendida(string palavraId)
     {
         OnPalavraEspelhada?.Invoke(palavraId);
-
-        // Validação e ativação de alavanca: só StateAuthority envia os RPCs
-        // para evitar duplicação. O LeverPanel só ativa se a palavra for correta
-        // (a lógica de validação está dentro do PhraseManager.RPC_ValidarPalavra).
-        if (HasStateAuthority)
-            PhraseManager.Instance?.RPC_ValidarPalavra(palavraId);
+        Debug.Log($"[MirrorWall] Palavra acendida: {palavraId} — enviando para PhraseManager");
+        PhraseManager.Instance?.RPC_ValidarPalavra(palavraId);
     }
 }

@@ -30,6 +30,11 @@ public class Player : NetworkBehaviour
 
     [Networked] private NetworkButtons PreviousButtons { get; set; }
 
+    // Personagem com que este objeto foi posicionado. Se a rede resolver um
+    // conflito e trocar o personagem, reposicionamos no ponto de spawn certo.
+    private Personagem _personagemPosicionado;
+    private bool _posicaoInicializada = false;
+
     private void Awake()
     {
         _cc = GetComponent<NetworkCharacterController>();
@@ -44,6 +49,8 @@ public class Player : NetworkBehaviour
         if (HasStateAuthority)
         {
             PersonagemAtual = LerPreferenciaPersonagem();
+            _personagemPosicionado = PersonagemAtual;
+            _posicaoInicializada = true;
         }
 
         if (HasInputAuthority)
@@ -54,10 +61,28 @@ public class Player : NetworkBehaviour
             LocalCamera = cameraHolder != null ? cameraHolder.GetComponentInChildren<Camera>() : Camera.main;
             LocalSpawnou = true;
 
+            // Coloca os renderers do personagem local em "LocalPlayer"
+            // para que a câmera dele não renderize o próprio corpo
+            int localLayer = LayerMask.NameToLayer("LocalPlayer");
+            if (localLayer >= 0)
+            {
+                foreach (var r in GetComponentsInChildren<Renderer>())
+                    r.gameObject.layer = localLayer;
+
+                Camera cam = cameraHolder != null ? cameraHolder.GetComponentInChildren<Camera>() : null;
+                if (cam != null)
+                    cam.cullingMask &= ~(1 << localLayer);
+            }
+
             if (!CutsceneFase1.Ativa)
+            {
                 AtivarCamera();
+            }
             else
+            {
+                if (cameraHolder != null) cameraHolder.gameObject.SetActive(false);
                 SolicitarAtivarCamera += AtivarCamera;
+            }
         }
         else if (cameraHolder != null)
         {
@@ -94,6 +119,18 @@ public class Player : NetworkBehaviour
             LocalPontoMao = null;
             LocalCamera = null;
         }
+    }
+
+    // Move o jogador para o ponto de spawn do personagem resolvido.
+    private void Reposicionar(Personagem p)
+    {
+        Transform ponto = BasicSpawner.PontoDeSpawn(p);
+        if (ponto == null) return;
+
+        if (_cc != null)
+            _cc.Teleport(ponto.position, ponto.rotation);
+        else
+            transform.SetPositionAndRotation(ponto.position, ponto.rotation);
     }
 
     // Lê a escolha feita na tela de seleção. Default: Kofi.
@@ -136,7 +173,17 @@ public class Player : NetworkBehaviour
         // Só o dono do objeto escreve o próprio personagem; roda sempre,
         // inclusive durante a cutscene, para já entrar na fase sem conflito.
         if (HasStateAuthority)
+        {
             ResolverConflitoPersonagem();
+
+            // Se o conflito trocou o personagem, move para o ponto de spawn
+            // correto para a posição não ficar errada.
+            if (_posicaoInicializada && PersonagemAtual != _personagemPosicionado)
+            {
+                Reposicionar(PersonagemAtual);
+                _personagemPosicionado = PersonagemAtual;
+            }
+        }
 
         if (_cc == null) return;
         if (CutsceneFase1.Ativa) return;

@@ -58,7 +58,7 @@ public class Lever : NetworkBehaviour
             barraProgresso.fillAmount = Progresso;
 
         if (engrenagem != null && EstadoAtual == Estado.SendoSegura)
-            engrenagem.Rotate(velocidadeEngrenagem * Time.deltaTime, 0f, 0f);
+            engrenagem.Rotate(0f, velocidadeEngrenagem * Time.deltaTime, 0f);
 
         foreach (var change in _changes.DetectChanges(this))
         {

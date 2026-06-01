@@ -46,14 +46,16 @@ public class PhraseManager : NetworkBehaviour
 
         string esperada = frases[fraseAtual].palavras[palavraAtual];
 
+        Debug.Log($"[PhraseManager] Validando: recebido={palavraId} esperado={esperada}");
         if (palavraId == esperada)
         {
+            Debug.Log($"[PhraseManager] CORRETO — ativando alavanca {palavraId}");
             _aguardandoAlavanca = true;
-            // Só após validação positiva a alavanca correspondente é ativada
             LeverPanel.Instance?.RPC_AtivarPorPalavra(palavraId);
         }
         else
         {
+            Debug.Log($"[PhraseManager] ERRADO — disparando erro");
             RPC_DispararErro();
         }
     }

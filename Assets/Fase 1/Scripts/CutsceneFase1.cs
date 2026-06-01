@@ -47,48 +47,39 @@ public class CutsceneFase1 : NetworkBehaviour
 
     private void Awake()
     {
-        // Marca a cutscene como ativa antes mesmo do Spawned para que o Player já saiba
         Ativa = true;
+    }
+
+    private void Start()
+    {
+        // Inicia a UI imediatamente sem esperar o Fusion spawnar o objeto
+        painelCutscene.SetActive(true);
+        botaoProximo.gameObject.SetActive(false);
+
+        for (int i = 0; i < controlesMobile.Length; i++)
+            if (controlesMobile[i] != null)
+                controlesMobile[i].SetActive(false);
+
+        Camera mainCam = Camera.main;
+        if (mainCam != null && mainCam != cameraCutscene)
+            mainCam.gameObject.SetActive(false);
+
+        if (cameraCutscene != null)
+            cameraCutscene.gameObject.SetActive(true);
+
+        MostrarSlideLocal(0);
     }
 
     public override void Spawned()
     {
-        // Configura o detector de mudanças nas variáveis sincronizadas
         _changes = GetChangeDetector(ChangeDetector.Source.SimulationState);
 
-        // Só o host inicia o slide no 0
         if (HasStateAuthority)
-        {
             slideAtual = 0;
-        }
 
-        // Mostra o painel da cutscene e esconde o botão de avançar
-        painelCutscene.SetActive(true);
-        botaoProximo.gameObject.SetActive(false);
-
-        // Esconde os controles mobile durante a cutscene
-        for (int i = 0; i < controlesMobile.Length; i++)
-        {
-            if (controlesMobile[i] != null)
-            {
-                controlesMobile[i].SetActive(false);
-            }
-        }
-
-        // Desliga a câmera principal e liga a câmera da cutscene
-        Camera mainCam = Camera.main;
-        if (mainCam != null && mainCam != cameraCutscene)
-        {
-            mainCam.gameObject.SetActive(false);
-        }
-
-        if (cameraCutscene != null)
-        {
-            cameraCutscene.gameObject.SetActive(true);
-        }
-
-        // Exibe o primeiro slide
-        MostrarSlideLocal(slideAtual);
+        // Só sincroniza se o cliente entrou tarde (já está em um slide além do 0)
+        if (slideAtual > 0)
+            MostrarSlideLocal(slideAtual);
     }
 
     public override void Render()

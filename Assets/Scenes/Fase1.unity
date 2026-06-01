@@ -1376,6 +1376,69 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 332624791}
   m_CullTransparentMesh: 1
+--- !u!1 &365592860
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 365592864}
+  - component: {fileID: 365592862}
+  - component: {fileID: 365592861}
+  m_Layer: 0
+  m_Name: Spawn (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &365592861
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 365592860}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 325880aed4040e041b60f1a64ad0d6fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &365592862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 365592860}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93c794784a9948f4ba306596fc3951ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  joystick: {fileID: 302797534}
+  sensibilidade: 0.15
+  painelJoystick: {fileID: 1072704379}
+  botaoPulo: {fileID: 1799573747}
+  textoTempo: {fileID: 1916162975}
+  usarTempo: 1
+--- !u!4 &365592864
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 365592860}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 51, y: 2.63, z: 152.75}
+  m_LocalScale: {x: 0.50699794, y: -0.007919081, z: 0.50699794}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &370183217
 GameObject:
   m_ObjectHideFlags: 0
@@ -5421,9 +5484,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c2f47f3a6a97a743b897c4bb610410f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _playerPrefab:
+  _prefabKofi:
     RawGuidValue: 71a2b93b7afc09f438e550f49730732d
-  pontoDeSpawn: {fileID: 0}
+  _prefabAldric:
+    RawGuidValue: 433244e716e0555468d993df42e3447e
+  pontoDeSpawnKofi: {fileID: 1162800412}
+  pontoDeSpawnAldric: {fileID: 365592864}
 --- !u!4 &1162800412
 Transform:
   m_ObjectHideFlags: 0
@@ -5433,7 +5499,7 @@ Transform:
   m_GameObject: {fileID: 1162800408}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 78.53, y: 9.98, z: 152.75}
+  m_LocalPosition: {x: 78.53, y: 7.63, z: 152.75}
   m_LocalScale: {x: 0.50699794, y: -0.007919081, z: 0.50699794}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5838,7 +5904,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slides:
-  - texto: "\u2014 Boas-vindas \u2014\n\nCandidatos.\n\nSejam bem-vindos \xE0 Torre."
+  - texto: "\u2014 Boas-vindas \u2014\n\nCandidatos. Sejam bem-vindos \xE0 Torre."
   - texto: "Voc\xEAs foram escolhidos por seus respectivos reinos para estar aqui.
       Essa escolha n\xE3o foi acidente. Foi julgamento. E o julgamento, como tudo
       nesta Torre, seguir\xE1 crit\xE9rios precisos."
@@ -5848,7 +5914,7 @@ MonoBehaviour:
       O que um n\xE3o alcan\xE7a, o outro alcan\xE7a. O que um n\xE3o enxerga, o
       outro enxerga. Guardem isso."
   - texto: "O cron\xF4metro n\xE3o espera. Vamos come\xE7ar."
-  - texto: "\u2014 Fase 1: Sala das Sequ\xEAncias \u2014\n\n\xC0 sua frente, um port\xE3o.
+  - texto: "\u2014 Fase 1: Sala das Sequ\xEAncias \u2014\n\xC0 sua frente, um port\xE3o.
       Ele n\xE3o abrir\xE1 pela for\xE7a. N\xE3o abrir\xE1 pelo tempo. Abrir\xE1
       apenas pela sequ\xEAncia correta."
   - texto: "Nesta sala h\xE1 dois elementos. Uma biblioteca, com tomos que registram
@@ -8690,6 +8756,7 @@ SceneRoots:
   - {fileID: 1687505443}
   - {fileID: 1916162974}
   - {fileID: 1162800412}
+  - {fileID: 365592864}
   - {fileID: 650413414}
   - {fileID: 858287489}
   - {fileID: 9425370}

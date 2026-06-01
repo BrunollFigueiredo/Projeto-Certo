@@ -22,8 +22,10 @@ public enum Personagem { Kofi, Aldric }
 
 public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 {
-    [SerializeField] private NetworkPrefabRef _playerPrefab;
-    [SerializeField] private Transform pontoDeSpawn;
+    [SerializeField] private NetworkPrefabRef _prefabKofi;
+    [SerializeField] private NetworkPrefabRef _prefabAldric;
+    [SerializeField] private Transform pontoDeSpawnKofi;
+    [SerializeField] private Transform pontoDeSpawnAldric;
 
     public static Vector2 TouchMoveInput;
     public static bool JumpPressed;
@@ -35,8 +37,24 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     public static Personagem PersonagemLocal { get; set; } = Personagem.Kofi;
     public static int JogadoresConectados { get; private set; } = 0;
 
+    // Pontos de spawn expostos para o Player se reposicionar caso a rede
+    // resolva um conflito de personagem (ver Player.ResolverConflitoPersonagem).
+    private static Transform _pontoKofi;
+    private static Transform _pontoAldric;
+
+    public static Transform PontoDeSpawn(Personagem p)
+    {
+        return p == Personagem.Aldric ? _pontoAldric : _pontoKofi;
+    }
+
     private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
     private NetworkRunner _runner;
+
+    private void Awake()
+    {
+        _pontoKofi = pontoDeSpawnKofi;
+        _pontoAldric = pontoDeSpawnAldric;
+    }
 
     private void Start()
     {
@@ -80,11 +98,13 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
         if (player == runner.LocalPlayer)
         {
-            // O personagem (Kofi/Aldric) é resolvido pelo próprio Player ao nascer,
-            // já com checagem de unicidade na rede. Ver Player.cs.
-            Vector3 posicao = pontoDeSpawn != null ? pontoDeSpawn.position : transform.position;
-            Quaternion rotacao = pontoDeSpawn != null ? pontoDeSpawn.rotation : transform.rotation;
-            runner.Spawn(_playerPrefab, posicao, rotacao, player);
+            bool isAldric = PlayerPrefs.GetString("PapelEscolhido", "") == "Aldric";
+            NetworkPrefabRef prefab = isAldric ? _prefabAldric : _prefabKofi;
+            Transform ponto = isAldric ? pontoDeSpawnAldric : pontoDeSpawnKofi;
+
+            Vector3 posicao = ponto != null ? ponto.position : transform.position;
+            Quaternion rotacao = ponto != null ? ponto.rotation : transform.rotation;
+            runner.Spawn(prefab, posicao, rotacao, player);
         }
     }
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)

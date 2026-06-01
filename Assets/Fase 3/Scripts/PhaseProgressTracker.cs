@@ -10,6 +10,12 @@ public class PhaseProgressTracker : NetworkBehaviour
     [SerializeField] private TextMeshProUGUI textoProgresso;
     [SerializeField] private UnityEvent OnVitoria;
 
+    [Header("Portas")]
+    [SerializeField] private GameObject porta1;
+    [SerializeField] private float distanciaPorta1 = 4f;
+    [SerializeField] private GameObject porta2;
+    [SerializeField] private float distanciaPorta2 = 4f;
+
     [Networked] private int frasesCompletas { get; set; }
 
     private ChangeDetector _changes;
@@ -42,6 +48,13 @@ public class PhaseProgressTracker : NetworkBehaviour
     private void RPC_Vitoria()
     {
         Debug.Log("[PhaseProgressTracker] VITÓRIA — todas as frases completas!");
+
+        if (porta1 != null)
+            porta1.transform.Translate(0f, 0f, -distanciaPorta1, Space.World);
+
+        if (porta2 != null)
+            porta2.transform.Translate(0f, -distanciaPorta2, 0f, Space.World);
+
         OnVitoria?.Invoke();
     }
 

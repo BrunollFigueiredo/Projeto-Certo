@@ -27,9 +27,30 @@ public class GerenciadorFase2 : NetworkBehaviour
     [Networked] private int entregasGrande { get; set; }
     [Networked] private bool portaAberta { get; set; }
 
+    public override void Spawned()
+    {
+        MostrarUI(false);
+    }
+
+    private void MostrarUI(bool visivel)
+    {
+        if (barraProgresso != null) barraProgresso.gameObject.SetActive(visivel);
+        if (textoPequeno != null)   textoPequeno.gameObject.SetActive(visivel);
+        if (textoMedio != null)     textoMedio.gameObject.SetActive(visivel);
+        if (textoGrande != null)    textoGrande.gameObject.SetActive(visivel);
+    }
+
     // Atualiza a UI todo frame
     public override void Render()
     {
+        if (CutsceneFase1.Ativa)
+        {
+            MostrarUI(false);
+            return;
+        }
+
+        MostrarUI(true);
+
         // Calcula o total entregue sem ultrapassar o necessário
         int total = necessarioPequeno + necessarioMedio + necessarioGrande;
         int totalEntregues = Mathf.Min(entregasPequeno, necessarioPequeno)
