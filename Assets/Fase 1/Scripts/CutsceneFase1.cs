@@ -77,17 +77,20 @@ public class CutsceneFase1 : NetworkBehaviour
         if (HasStateAuthority)
             slideAtual = 0;
 
-        // Só sincroniza se o cliente entrou tarde (já está em um slide além do 0)
-        if (slideAtual > 0)
-            MostrarSlideLocal(slideAtual);
+        // (Re)inicia o slide atual aqui. O Fusion desativa objetos de cena até
+        // o Spawned, o que mata a coroutine de digitação iniciada no Start().
+        // Forçamos o reinício para a animação rodar até o fim e o botão aparecer.
+        _ultimoSlideExibido = -1;
+        MostrarSlideLocal(slideAtual);
     }
 
     public override void Render()
     {
-        // Quando o slide muda no host, atualiza nos clientes
+        // Quando o slide muda no host, atualiza nos clientes.
+        // Só avança para frente — nunca reinicia o slide atual.
         foreach (var change in _changes.DetectChanges(this))
         {
-            if (change == nameof(slideAtual))
+            if (change == nameof(slideAtual) && slideAtual > _ultimoSlideExibido)
             {
                 MostrarSlideLocal(slideAtual);
             }
