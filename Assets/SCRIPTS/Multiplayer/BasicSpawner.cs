@@ -148,9 +148,10 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
         _runner.ProvideInput = true;
 
         bool querAldric = PlayerPrefs.GetString("PapelEscolhido", "") == "Aldric";
+        int masterCharValue = querAldric ? 1 : 0;
         var sessionProps = new Dictionary<string, SessionProperty>
         {
-            ["masterChar"] = new SessionProperty(querAldric ? 1 : 0)
+            ["masterChar"] = masterCharValue
         };
 
         await _runner.StartGame(new StartGameArgs()

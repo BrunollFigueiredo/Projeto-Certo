@@ -660,9 +660,9 @@ MonoBehaviour:
   OnVitoria:
     m_PersistentCalls:
       m_Calls: []
-  porta1: {fileID: 0}
+  porta1: {fileID: 363146339}
   distanciaPorta1: 4
-  porta2: {fileID: 0}
+  porta2: {fileID: 1556499842}
   distanciaPorta2: 4
 --- !u!114 &293609413
 MonoBehaviour:

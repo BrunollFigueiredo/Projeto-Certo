@@ -1,36 +1,21 @@
+using Fusion;
 using UnityEngine;
 
-public class PortaFinal : MonoBehaviour
+public class PortaFinal : NetworkBehaviour
 {
-    public GameObject Portão3;
-    float cont = 0;
-    public float contF = 2;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
-        {
-            cont++;
-            if (cont == contF)
-            {
-                Portão3.transform.Translate(0, 40, 0);
-            }
-        }
+        if (!HasStateAuthority) return;
+        if (!other.CompareTag("Player")) return;
+
+        GerenciadorFase4.Instance.RPC_MudarJogadoresFinal(1);
     }
+
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
-        {
-            cont--;
-        }
-    }
-    // Update is called once per frame
-    void Update()
-    {
-        
+        if (!HasStateAuthority) return;
+        if (!other.CompareTag("Player")) return;
+
+        GerenciadorFase4.Instance.RPC_MudarJogadoresFinal(-1);
     }
 }

@@ -1,34 +1,46 @@
+using Fusion;
 using UnityEngine;
 
-public class ItemVermelho : MonoBehaviour
+public class ItemVermelho : NetworkBehaviour
 {
-    Renderer cor;
-    public GameObject Portão2;
-    private void OnTriggerEnter(Collider other)
+    [Networked] private NetworkBool ItemColocado { get; set; }
+
+    private Renderer _renderer;
+
+    public override void Spawned()
     {
-        if (other.CompareTag("Vermelho"))
-        {
-            cor.material.color = Color.green;
-            Portão2.transform.Translate(0, 5, 0);
-        }
-    }
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Vermelho"))
-        {
-            cor.material.color = Color.red;
-            Portão2.transform.Translate(0, -5, 0);
-        }
-    }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        cor = (Renderer)GetComponent<Renderer>();
+        _renderer = GetComponent<Renderer>();
+        AtualizarCor();
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void Render()
     {
-        
+        AtualizarCor();
+    }
+
+    private void AtualizarCor()
+    {
+        if (_renderer == null) return;
+        _renderer.material.color = ItemColocado ? Color.green : Color.red;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!HasStateAuthority) return;
+        if (!other.CompareTag("Vermelho")) return;
+        if (ItemColocado) return;
+
+        ItemColocado = true;
+        GerenciadorFase4.Instance.RPC_MudarItens(1);
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (!HasStateAuthority) return;
+        if (!other.CompareTag("Vermelho")) return;
+        if (!ItemColocado) return;
+
+        ItemColocado = false;
+        GerenciadorFase4.Instance.RPC_MudarItens(-1);
     }
 }

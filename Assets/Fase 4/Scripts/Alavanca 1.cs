@@ -1,61 +1,76 @@
-using Unity.VisualScripting;
+using Fusion;
 using UnityEngine;
 
-public class Alavanca1 : MonoBehaviour
+public class Alavanca1 : NetworkBehaviour
 {
-    public GameObject plataforma1;
-    float cont = 0;
-    public GameObject baseA;
-    public GameObject baseB;
-    Rigidbody rb;
-    private Vector3 touchPosition;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [SerializeField] private Transform plataforma;   // Plataforma do OUTRO jogador
+    [SerializeField] private Transform baseOrigem;   // Posição inicial da plataforma
+    [SerializeField] private Transform baseDestino;  // Posição quando a alavanca está sendo segurada
+    [SerializeField] private float velocidade = 3f;
+
+    [Networked] private NetworkBool Segurando { get; set; }
+
+    private int _dedoId = -1;
+    private bool _estavaSegurandoLocal = false;
+
+    public override void FixedUpdateNetwork()
     {
-        rb = GetComponent<Rigidbody>();
+        if (plataforma == null) return;
+
+        Vector3 alvo = Segurando ? baseDestino.position : baseOrigem.position;
+        plataforma.position = Vector3.MoveTowards(
+            plataforma.position,
+            alvo,
+            velocidade * Runner.DeltaTime
+        );
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        if (Input.touchCount > 0)
+        Camera cam = Player.LocalCamera != null ? Player.LocalCamera : Camera.main;
+        if (cam == null) return;
+
+        bool segurando = false;
+
+        for (int i = 0; i < Input.touchCount; i++)
         {
-            Touch touch = Input.GetTouch(0);
-            Vector3 touchPositionPixels = new Vector3(touch.position.x, touch.position.y, Camera.main.WorldToScreenPoint(rb.position).z
+            Touch t = Input.GetTouch(i);
 
- );
-            touchPosition = Camera.main.ScreenToWorldPoint(touchPositionPixels);
-
-            Ray ray = Camera.main.ScreenPointToRay(touch.position);
-
-            RaycastHit hit;
-            switch (touch.phase)
+            if (t.phase == TouchPhase.Began)
             {
-                case TouchPhase.Began:
-
-                if (Physics.Raycast(ray, out hit) && hit.collider.gameObject == gameObject)
-                {
-                    cont++;
-                } break;
+                Ray ray = cam.ScreenPointToRay(t.position);
+                if (Physics.Raycast(ray, out RaycastHit hit) && hit.collider.gameObject == gameObject)
+                    _dedoId = t.fingerId;
             }
-            if (cont > 0 && cont < 2)
+
+            if (t.fingerId == _dedoId)
             {
-                if (plataforma1.transform.position.z > baseA.transform.position.z)
-                {
-                    plataforma1.transform.Translate(0, 0, -2);
-                }
-            }
-            if (cont >= 2)
-            {
-                if (plataforma1.transform.position.z < baseB.transform.position.z)
-                {
-                    plataforma1.transform.Translate(0, 0, 2);
-                }
+                if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
+                    _dedoId = -1;
                 else
-                {
-                    cont = 0;
-                }
+                    segurando = true;
             }
         }
-    } 
+
+#if UNITY_EDITOR
+        if (Input.GetMouseButton(0))
+        {
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out RaycastHit hit) && hit.collider.gameObject == gameObject)
+                segurando = true;
+        }
+#endif
+
+        if (segurando != _estavaSegurandoLocal)
+        {
+            _estavaSegurandoLocal = segurando;
+            RPC_SetSegurando(segurando);
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_SetSegurando(NetworkBool segurando)
+    {
+        Segurando = segurando;
+    }
 }
