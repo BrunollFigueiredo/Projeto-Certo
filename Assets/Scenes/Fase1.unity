@@ -4827,7 +4827,7 @@ MonoBehaviour:
   painelLivroUI: {fileID: 650413410}
   imagemNoCanvas: {fileID: 195058469}
   imagemDoLivro: {fileID: 21300000, guid: bf6024ea30991624a8139a7e4d9c4cb7, type: 3}
-  modoTeste: 1
+  modoTeste: 0
 --- !u!114 &1016221927
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6206,7 +6206,7 @@ MonoBehaviour:
   painelLivroUI: {fileID: 858287485}
   imagemNoCanvas: {fileID: 142620804}
   imagemDoLivro: {fileID: 21300000, guid: bf6024ea30991624a8139a7e4d9c4cb7, type: 3}
-  modoTeste: 1
+  modoTeste: 0
 --- !u!114 &1441050305
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6718,7 +6718,7 @@ MonoBehaviour:
   painelLivroUI: {fileID: 370183217}
   imagemNoCanvas: {fileID: 1662449523}
   imagemDoLivro: {fileID: 21300000, guid: bf6024ea30991624a8139a7e4d9c4cb7, type: 3}
-  modoTeste: 1
+  modoTeste: 0
 --- !u!114 &1636235884
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8660,7 +8660,7 @@ MonoBehaviour:
   painelLivroUI: {fileID: 9425366}
   imagemNoCanvas: {fileID: 606562444}
   imagemDoLivro: {fileID: 21300000, guid: bf6024ea30991624a8139a7e4d9c4cb7, type: 3}
-  modoTeste: 1
+  modoTeste: 0
 --- !u!114 &2118520034
 MonoBehaviour:
   m_ObjectHideFlags: 0

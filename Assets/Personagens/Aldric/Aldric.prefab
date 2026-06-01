@@ -418,6 +418,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _PersonagemAtual: 1
+  personagemDoPrefab: 1
   speed: 15
   cameraHolder: {fileID: 7489462614754449444}
   pontoMao: {fileID: 0}

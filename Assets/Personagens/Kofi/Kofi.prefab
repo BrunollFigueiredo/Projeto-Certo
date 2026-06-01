@@ -549,13 +549,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 1.54
-  m_Radius: 0.2
+  m_Height: 6
+  m_Radius: 1.8
   m_SlopeLimit: 45
-  m_StepOffset: 3.8
+  m_StepOffset: 2.2
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 1, z: 0}
+  m_Center: {x: 0, y: 7, z: 0}
 --- !u!114 &-1472656384312542226
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -569,6 +569,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _PersonagemAtual: 0
+  personagemDoPrefab: 0
   speed: 15
   cameraHolder: {fileID: 4716404811455751154}
   pontoMao: {fileID: 3903366465562760254}

@@ -5,7 +5,7 @@ public class MobileUIManager : MonoBehaviour
 {
     public static MobileUIManager Instance { get; private set; }
 
-    [Header("Botões de Interação")]
+    [Header("Botï¿½es de Interaï¿½ï¿½o")]
     [SerializeField] private Button pickUpButton;
     [SerializeField] private Button dropButton;
 
@@ -17,9 +17,8 @@ public class MobileUIManager : MonoBehaviour
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
 
-        // Esconde ambos os botões no início
-        pickUpButton.gameObject.SetActive(false);
-        dropButton.gameObject.SetActive(false);
+        if (pickUpButton != null) pickUpButton.gameObject.SetActive(false);
+        if (dropButton != null) dropButton.gameObject.SetActive(false);
     }
 
     // Chamado pelo PlayerInteractor quando o player local nasce (Spawned)
@@ -27,7 +26,7 @@ public class MobileUIManager : MonoBehaviour
     {
         localPlayer = player;
 
-        // Configura os eventos de clique dos botões mobile
+        // Configura os eventos de clique dos botï¿½es mobile
         pickUpButton.onClick.RemoveAllListeners();
         pickUpButton.onClick.AddListener(() => localPlayer.OnPickUpButtonPressed());
 
@@ -37,14 +36,13 @@ public class MobileUIManager : MonoBehaviour
 
     public void ShowPickUpButton(bool show)
     {
-        pickUpButton.gameObject.SetActive(show);
+        if (pickUpButton != null) pickUpButton.gameObject.SetActive(show);
     }
 
-    // Alterna entre o estado de "Pegar" e "Largar"
     public void ToggleHoldState(bool isHolding)
     {
-        pickUpButton.gameObject.SetActive(!isHolding);
-        dropButton.gameObject.SetActive(isHolding);
+        if (pickUpButton != null) pickUpButton.gameObject.SetActive(!isHolding);
+        if (dropButton != null) dropButton.gameObject.SetActive(isHolding);
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()

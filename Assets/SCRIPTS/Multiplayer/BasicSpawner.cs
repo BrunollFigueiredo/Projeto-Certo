@@ -157,7 +157,7 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
         await _runner.StartGame(new StartGameArgs()
         {
             GameMode = mode,
-            SessionName = "TestRoom",
+            SessionName = "ProjetoCerto_" + SceneManager.GetActiveScene().buildIndex,
             Scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex),
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>(),
             PlayerCount = 2,

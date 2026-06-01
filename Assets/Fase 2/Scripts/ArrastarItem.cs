@@ -6,7 +6,7 @@ using UnityEngine.EventSystems;
 // Permite pegar, segurar na mão e soltar objetos (encaixando ou jogando)
 public class ArrastarItem : MonoBehaviour
 {
-    // Referência estática para garantir que só um objeto seja segurado por vez
+    /// Referência estática para garantir que só um objeto seja segurado por vez
     private static ArrastarItem objetoSendoSeguro = null;
 
     private Transform jogador;          // Transform do jogador local
