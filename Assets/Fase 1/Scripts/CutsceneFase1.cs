@@ -37,13 +37,14 @@ public class CutsceneFase1 : NetworkBehaviour
     [SerializeField] private GameObject[] controlesMobile;       // Joystick e botão de pulo (ficam ocultos)
     [SerializeField] [Range(0.01f, 0.1f)] private float velocidadeDigitacao = 0.03f; // Tempo entre cada letra
 
-    [Networked] private int slideAtual { get; set; }  // Slide atual sincronizado entre os jogadores
-
     public static bool Ativa { get; private set; } = false; // Flag global para outros scripts saberem que a cutscene está rolando
 
-    private ChangeDetector _changes;            // Detecta mudanças nas variáveis [Networked]
+    // A cutscene avança de forma LOCAL em cada jogador (cada um lê no seu ritmo).
+    // Evita depender de StateAuthority/RPC de objeto de cena no Shared Mode,
+    // que travava o avanço.
     private Coroutine _coroutineDigitacao;      // Referência da animação de digitar atual
-    private int _ultimoSlideExibido = -1;       // Evita exibir o mesmo slide duas vezes
+    private int _ultimoSlideExibido = -1;       // Slide atualmente em exibição
+    private bool _digitacaoCompleta = false;    // Se a digitação do slide atual terminou
 
     private void Awake()
     {
@@ -72,37 +73,18 @@ public class CutsceneFase1 : NetworkBehaviour
 
     public override void Spawned()
     {
-        _changes = GetChangeDetector(ChangeDetector.Source.SimulationState);
-
-        if (HasStateAuthority)
-            slideAtual = 0;
-
-        // (Re)inicia o slide atual aqui. O Fusion desativa objetos de cena até
-        // o Spawned, o que mata a coroutine de digitação iniciada no Start().
-        // Forçamos o reinício para a animação rodar até o fim e o botão aparecer.
-        _ultimoSlideExibido = -1;
-        MostrarSlideLocal(slideAtual);
-    }
-
-    public override void Render()
-    {
-        // Quando o slide muda no host, atualiza nos clientes.
-        // Só avança para frente — nunca reinicia o slide atual.
-        foreach (var change in _changes.DetectChanges(this))
-        {
-            if (change == nameof(slideAtual) && slideAtual > _ultimoSlideExibido)
-            {
-                MostrarSlideLocal(slideAtual);
-            }
-        }
+        // O Fusion desativa objetos de cena até o Spawned, o que mata a coroutine
+        // de digitação iniciada no Start(). Se o slide 0 ainda não terminou de
+        // digitar, reinicia aqui (objeto já ativo) para o botão aparecer.
+        if (_ultimoSlideExibido <= 0 && !_digitacaoCompleta)
+            MostrarSlideLocal(0);
     }
 
     // Mostra um slide específico na tela local
     void MostrarSlideLocal(int index)
     {
-        // Não repete o mesmo slide
-        if (index == _ultimoSlideExibido) return;
         _ultimoSlideExibido = index;
+        _digitacaoCompleta = false;
 
         // Cancela a animação anterior se ainda estiver rodando
         if (_coroutineDigitacao != null)
@@ -129,6 +111,9 @@ public class CutsceneFase1 : NetworkBehaviour
             yield return new WaitForSeconds(velocidadeDigitacao);
         }
 
+        // Marca a digitação deste slide como concluída
+        _digitacaoCompleta = true;
+
         // Quando termina, mostra o botão de avançar com o texto certo
         bool ultimo = indexSlide >= slides.Length - 1;
 
@@ -147,49 +132,23 @@ public class CutsceneFase1 : NetworkBehaviour
         botaoProximo.gameObject.SetActive(true);
     }
 
-    // Chamado pelo botão Próximo/Começar
+    // Chamado pelo botão Próximo/Começar — avança localmente, imediato.
     public void AvancarSlide()
     {
+        // Ignora cliques enquanto o slide ainda está digitando
+        if (!_digitacaoCompleta) return;
+
         botaoProximo.gameObject.SetActive(false);
 
-        // O host avança direto, os clientes pedem via RPC
-        if (HasStateAuthority)
-        {
-            ProcessarAvanco();
-        }
-        else
-        {
-            RPC_PedirAvanco();
-        }
-    }
-
-    // RPC: cliente pede ao host para avançar o slide
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    void RPC_PedirAvanco()
-    {
-        ProcessarAvanco();
-    }
-
-    // Avança o slide ou termina a cutscene se for o último
-    void ProcessarAvanco()
-    {
-        int proximo = slideAtual + 1;
-
+        int proximo = _ultimoSlideExibido + 1;
         if (proximo >= slides.Length)
         {
-            RPC_TerminarCutscene();
+            TerminarCutsceneLocal();
         }
         else
         {
-            slideAtual = proximo;
+            MostrarSlideLocal(proximo);
         }
-    }
-
-    // RPC: avisa todos para encerrar a cutscene
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    void RPC_TerminarCutscene()
-    {
-        TerminarCutsceneLocal();
     }
 
     // Encerra a cutscene na tela local (esconde painel, religa controles e câmera do jogador)

@@ -417,7 +417,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: feb6f4a1d6cffed4b8bfacf9c4c3d111, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _PersonagemAtual: 0
+  _PersonagemAtual: 1
   speed: 15
   cameraHolder: {fileID: 7489462614754449444}
   pontoMao: {fileID: 0}

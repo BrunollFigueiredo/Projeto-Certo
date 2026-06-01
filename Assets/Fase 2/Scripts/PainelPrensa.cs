@@ -94,6 +94,11 @@ public class PainelPrensa : MonoBehaviour
     // Abre o painel da UI
     void AbrirUI()
     {
+        if (BasicSpawner.PersonagemLocal == Personagem.Kofi)
+        {
+            FeedbackUI.Mostrar("Apenas Aldric pode usar o painel.");
+            return;
+        }
         uiAberta = true;
         painelUI.SetActive(true);
     }

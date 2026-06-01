@@ -5904,7 +5904,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slides:
-  - texto: "\u2014 Boas-vindas \u2014\n\nCandidatos. Sejam bem-vindos \xE0 Torre."
+  - texto: "\u2014 Boas-vindas \u2014\nCandidatos. Sejam bem-vindos \xE0 Torre."
   - texto: "Voc\xEAs foram escolhidos por seus respectivos reinos para estar aqui.
       Essa escolha n\xE3o foi acidente. Foi julgamento. E o julgamento, como tudo
       nesta Torre, seguir\xE1 crit\xE9rios precisos."

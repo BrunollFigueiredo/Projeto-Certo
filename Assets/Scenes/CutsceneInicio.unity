@@ -797,8 +797,8 @@ MonoBehaviour:
   slides:
   - texto: "Por gera\xE7\xF5es, dois reinos dividiram o mesmo continente."
   - texto: "Umbra, de tradi\xE7\xE3o comunit\xE1ria, guiada por anci\xE3os e pelo
-      conhecimento transmitido pela fala.\n\nAuris, um imp\xE9rio hier\xE1rquico,
-      com institui\xE7\xF5es centralizadas e o h\xE1bito de registrar tudo que considerava
+      conhecimento transmitido pela fala.\nAuris, um imp\xE9rio hier\xE1rquico, com
+      institui\xE7\xF5es centralizadas e o h\xE1bito de registrar tudo que considerava
       relevante."
   - texto: "Entre os dois, a guerra. Auris venceu. A terra de Umbra foi dividida.
       Metade permaneceu. A outra metade passou ao Imp\xE9rio, junto com tudo que
@@ -810,13 +810,13 @@ MonoBehaviour:
   - texto: "Logo depois, um mensageiro chegou aos dois reinos com a mesma proposta.
       Qualquer candidato que chegasse ao topo poderia negociar benef\xEDcios para
       o pr\xF3prio povo."
-  - texto: "Umbra escolheu Kofi.\n\nAuris escolheu Aldric.\n\nOs dois cruzaram a
-      porta da Torre carregando o peso da hist\xF3ria dos pr\xF3prios povos."
-  - texto: "Candidatos.\n\nMeu nome n\xE3o importa. O que importa \xE9 o que esta
-      Torre representa."
-  - texto: "Sou o Arquiteto. Fui eu quem trouxe voc\xEAs at\xE9 aqui.\n\nE serei
-      eu quem vai acompanhar cada passo de voc\xEAs at\xE9 o topo.\n\nSe \xE9 que
-      chegarem l\xE1."
+  - texto: "Umbra escolheu Kofi.\nAuris escolheu Aldric.\nOs dois cruzaram a porta
+      da Torre carregando o peso da hist\xF3ria dos pr\xF3prios povos."
+  - texto: "Candidatos.\nMeu nome n\xE3o importa. O que importa \xE9 o que esta Torre
+      representa."
+  - texto: "Sou o Arquiteto. Fui eu quem trouxe voc\xEAs at\xE9 aqui.\nE serei eu
+      quem vai acompanhar cada passo de voc\xEAs at\xE9 o topo.\nSe \xE9 que chegarem
+      l\xE1."
   painelCutscene: {fileID: 1549800908}
   textoNarrador: {fileID: 159688872}
   botaoProximo: {fileID: 737908431}

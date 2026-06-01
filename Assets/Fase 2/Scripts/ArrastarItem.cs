@@ -192,6 +192,11 @@ public class ArrastarItem : MonoBehaviour
     // Pega o objeto: marca como segurando e desliga a física
     void PegarObjeto()
     {
+        if (BasicSpawner.PersonagemLocal == Personagem.Aldric)
+        {
+            FeedbackUI.Mostrar("Apenas Kofi pode carregar objetos.");
+            return;
+        }
         segurandoEsteObjeto = true;
         objetoSendoSeguro = this;
 

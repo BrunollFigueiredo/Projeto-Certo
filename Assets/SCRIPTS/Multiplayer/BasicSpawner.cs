@@ -98,10 +98,24 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
         if (player == runner.LocalPlayer)
         {
-            bool isAldric = PlayerPrefs.GetString("PapelEscolhido", "") == "Aldric";
+            bool isAldric;
+
+            if (runner.IsSharedModeMasterClient)
+            {
+                // Criador da sala: usa a própria escolha
+                isAldric = PlayerPrefs.GetString("PapelEscolhido", "") == "Aldric";
+            }
+            else
+            {
+                // Quem entrou: pega o oposto do que o criador escolheu
+                if (runner.SessionInfo.Properties.TryGetValue("masterChar", out SessionProperty masterChar))
+                    isAldric = (int)masterChar != 1; // oposto do master
+                else
+                    isAldric = PlayerPrefs.GetString("PapelEscolhido", "") == "Aldric";
+            }
+
             NetworkPrefabRef prefab = isAldric ? _prefabAldric : _prefabKofi;
             Transform ponto = isAldric ? pontoDeSpawnAldric : pontoDeSpawnKofi;
-
             Vector3 posicao = ponto != null ? ponto.position : transform.position;
             Quaternion rotacao = ponto != null ? ponto.rotation : transform.rotation;
             runner.Spawn(prefab, posicao, rotacao, player);
@@ -132,13 +146,21 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     {
         _runner = gameObject.AddComponent<NetworkRunner>();
         _runner.ProvideInput = true;
+
+        bool querAldric = PlayerPrefs.GetString("PapelEscolhido", "") == "Aldric";
+        var sessionProps = new Dictionary<string, SessionProperty>
+        {
+            ["masterChar"] = new SessionProperty(querAldric ? 1 : 0)
+        };
+
         await _runner.StartGame(new StartGameArgs()
         {
             GameMode = mode,
             SessionName = "TestRoom",
             Scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex),
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>(),
-            PlayerCount = 10
+            PlayerCount = 2,
+            SessionProperties = sessionProps
         });
     }
 }

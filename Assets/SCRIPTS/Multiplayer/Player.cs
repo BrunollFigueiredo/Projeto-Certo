@@ -24,6 +24,7 @@ public class Player : NetworkBehaviour
 
     private NetworkCharacterController _cc;
 
+    [SerializeField] private Personagem personagemDoPrefab = Personagem.Kofi;
     [SerializeField] private float speed = 15f;
     [SerializeField] private Transform cameraHolder;
     [SerializeField] private Transform pontoMao;
@@ -48,10 +49,13 @@ public class Player : NetworkBehaviour
         // objeto, então define o personagem inicial a partir da escolha salva.
         if (HasStateAuthority)
         {
-            PersonagemAtual = LerPreferenciaPersonagem();
+            PersonagemAtual = personagemDoPrefab;
             _personagemPosicionado = PersonagemAtual;
             _posicaoInicializada = true;
         }
+
+        int localLayer   = LayerMask.NameToLayer("LocalPlayer");
+        int defaultLayer = LayerMask.NameToLayer("Default");
 
         if (HasInputAuthority)
         {
@@ -61,9 +65,7 @@ public class Player : NetworkBehaviour
             LocalCamera = cameraHolder != null ? cameraHolder.GetComponentInChildren<Camera>() : Camera.main;
             LocalSpawnou = true;
 
-            // Coloca os renderers do personagem local em "LocalPlayer"
-            // para que a câmera dele não renderize o próprio corpo
-            int localLayer = LayerMask.NameToLayer("LocalPlayer");
+            // Próprio corpo → LocalPlayer: câmera local não renderiza
             if (localLayer >= 0)
             {
                 foreach (var r in GetComponentsInChildren<Renderer>())
@@ -84,9 +86,16 @@ public class Player : NetworkBehaviour
                 SolicitarAtivarCamera += AtivarCamera;
             }
         }
-        else if (cameraHolder != null)
+        else
         {
-            cameraHolder.gameObject.SetActive(false);
+            // Proxy → força Default: garante visibilidade mesmo que o prefab
+            // tenha ficado com LocalPlayer salvo de um teste anterior
+            if (defaultLayer >= 0)
+                foreach (var r in GetComponentsInChildren<Renderer>())
+                    r.gameObject.layer = defaultLayer;
+
+            if (cameraHolder != null)
+                cameraHolder.gameObject.SetActive(false);
         }
     }
 
