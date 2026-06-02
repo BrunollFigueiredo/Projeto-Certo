@@ -823,7 +823,7 @@ MonoBehaviour:
   textoBotaoProximo: {fileID: 884026679}
   cameraCutscene: {fileID: 53347483}
   nomeCenaDestino: Escolha Jogador
-  velocidadeDigitacao: 0.03
+  velocidadeDigitacao: 0.0208
 --- !u!4 &1121174540
 Transform:
   m_ObjectHideFlags: 0

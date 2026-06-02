@@ -3,8 +3,13 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
-// Permite pegar, segurar na mão e soltar objetos (encaixando ou jogando)
-public class ArrastarItem : MonoBehaviour
+// Permite pegar, segurar na mão e soltar objetos (encaixando ou jogando).
+// IMPORTANTE: as escritas de posição (grudar na mão / encaixar) acontecem em
+// FixedUpdateNetwork (no tick), NÃO no Update. Na autoridade, o NetworkTransform
+// reaplica a posição do tick durante o Render; uma escrita feita no Update seria
+// atropelada todo frame e o objeto ficava "bugado" sem ser pego de verdade.
+// Requer: NetworkObject + NetworkTransform + Collider + Rigidbody.
+public class ArrastarItem : NetworkBehaviour
 {
     /// Referência estática para garantir que só um objeto seja segurado por vez
     private static ArrastarItem objetoSendoSeguro = null;
@@ -13,18 +18,18 @@ public class ArrastarItem : MonoBehaviour
     private Transform pontoMao;         // Ponto onde o objeto fica preso (mão)
     private Camera cam;                 // Câmera usada no raycast
     private bool segurandoEsteObjeto = false; // Se este objeto está nas minhas mãos
+    private bool pedidoSoltar = false;  // Input pediu soltar; aplicado no próximo tick
     private Rigidbody rb;               // Rigidbody do objeto
-    private NetworkObject netObj;       // NetworkObject do item (se for em rede)
     private float tempoCooldown = 4f;   // Tempo até poder pegar de novo após soltar
     public float maxTimeBetweenTaps = 0.3f;
     private int tapCount = 0;
     private float lastTapTime = 0;
     public UnityEvent onDoubleTap;
-    void Start()
+
+    public override void Spawned()
     {
         // Configura o Rigidbody para evitar bugs de colisão e rotação
         rb = GetComponent<Rigidbody>();
-        netObj = GetComponent<NetworkObject>();
 
         if (rb != null)
         {
@@ -37,6 +42,8 @@ public class ArrastarItem : MonoBehaviour
         Vector3 s = transform.localScale;
         transform.localScale = new Vector3(Mathf.Abs(s.x), Mathf.Abs(s.y), Mathf.Abs(s.z));
     }
+
+    // ─── Update SÓ lê o input. As escritas de posição vão pro tick. ───────────
 
     void Update()
     {
@@ -71,21 +78,35 @@ public class ArrastarItem : MonoBehaviour
             }
         }
 
-        // Se já estou segurando este objeto: gruda na mão e espera um novo
-        // toque/clique (fora da UI) para soltar. DetectouToque funciona tanto
-        // com mouse no editor/simulador quanto com dedo no dispositivo — por
-        // isso o soltar volta a funcionar fora do celular.
+        // Se já estou segurando este objeto: soltar exige DOIS toques rápidos
+        // (double-tap). Dois toques dentro de maxTimeBetweenTaps marcam o pedido
+        // de soltar — o tick processa. (Seguir a mão também é feito no tick, por
+        // isso aqui não escrevemos posição.)
         if (segurandoEsteObjeto)
         {
-            AtualizarPosicaoNaMao();
-
             Vector2 _toqueSolta;
             if (DetectouToque(out _toqueSolta))
             {
-                SoltarObjeto();
+                float agora = Time.time;
+
+                // Se o toque anterior foi recente, conta como 2º toque; senão reinicia.
+                if (agora - lastTapTime <= maxTimeBetweenTaps)
+                    tapCount++;
+                else
+                    tapCount = 1;
+
+                lastTapTime = agora;
+
+                if (tapCount >= 2)
+                {
+                    pedidoSoltar = true;
+                    tapCount = 0;
+                    onDoubleTap?.Invoke();
+                }
             }
             return; // enquanto seguro algo, não tento pegar outro objeto
         }
+
         // Não tenta pegar se está em cooldown, se já tem alguém segurando ou se a tag não bate
         if (tempoCooldown > 0f) return;
         if (objetoSendoSeguro != null) return;
@@ -96,6 +117,45 @@ public class ArrastarItem : MonoBehaviour
         if (DetectouToque(out posicaoToque))
         {
             TentarPegarObjeto(posicaoToque);
+        }
+    }
+
+    // ─── Posição é aplicada no tick de rede ──────────────────────────────────
+
+    public override void FixedUpdateNetwork()
+    {
+        if (!segurandoEsteObjeto && !pedidoSoltar) return;
+
+        // Só a autoridade pode mexer no transform de um NetworkObject. Enquanto
+        // ela não chega, seguimos pedindo e não escrevemos (NetworkTransform segura).
+        if (!HasStateAuthority)
+        {
+            Object.RequestStateAuthority();
+            return;
+        }
+
+        if (pedidoSoltar)
+        {
+            pedidoSoltar = false;
+            SoltarObjeto();
+            return;
+        }
+
+        if (segurandoEsteObjeto)
+        {
+            AtualizarPosicaoNaMao();
+        }
+    }
+
+    // Render roda a cada frame visual (depois da interpolação). Para quem está
+    // segurando, gruda o objeto exatamente no PontoMão sem o atraso da
+    // interpolação do NetworkTransform — assim ele vai direto pra mão e fica lá.
+    // A posição de rede para os outros jogadores continua vindo do tick.
+    public override void Render()
+    {
+        if (segurandoEsteObjeto && HasStateAuthority)
+        {
+            AtualizarPosicaoNaMao();
         }
     }
 
@@ -163,6 +223,7 @@ public class ArrastarItem : MonoBehaviour
     // Atualiza a posição/rotação do objeto para acompanhar a mão do jogador
     void AtualizarPosicaoNaMao()
     {
+        if (pontoMao == null) return;
         transform.position = pontoMao.position;
         transform.rotation = pontoMao.rotation;
     }
@@ -170,21 +231,25 @@ public class ArrastarItem : MonoBehaviour
     // Pega o objeto: marca como segurando e desliga a física
     void PegarObjeto()
     {
-        // TESTE: restrição de personagem desativada para testar com Aldric.
-        // (Originalmente apenas Kofi podia carregar objetos.)
-        //if (BasicSpawner.PersonagemLocal == Personagem.Aldric)
-        //{
-        //    FeedbackUI.Mostrar("Apenas Kofi pode carregar objetos.");
-        //    return;
-        //}
+        // Apenas Kofi pode carregar objetos nesta fase.
+        if (BasicSpawner.PersonagemLocal == Personagem.Aldric)
+        {
+            FeedbackUI.Mostrar("Apenas Kofi pode carregar objetos.");
+            return;
+        }
+
         segurandoEsteObjeto = true;
         objetoSendoSeguro = this;
 
+        // Zera o contador para o double-tap de soltar começar do zero.
+        tapCount = 0;
+        lastTapTime = 0f;
+
         // Pede a autoridade do objeto na rede para que mover a posição
         // sincronize para o outro jogador via NetworkTransform.
-        if (netObj != null && !netObj.HasStateAuthority)
+        if (!HasStateAuthority)
         {
-            netObj.RequestStateAuthority();
+            Object.RequestStateAuthority();
         }
 
         if (rb != null)
@@ -204,19 +269,45 @@ public class ArrastarItem : MonoBehaviour
         // Procura por todos os pontos de encaixe da cena
         PontoDeEncaixe[] pontos = FindObjectsByType<PontoDeEncaixe>(FindObjectsSortMode.None);
 
+        // Considera a posição do OBJETO (mão) e a do JOGADOR, e usa a MENOR
+        // distância — assim encaixa se qualquer um dos dois estiver dentro do raio.
+        Vector3 posObjeto = transform.position;
+        Vector3 posJogador = jogador != null ? jogador.position : posObjeto;
+
+        // Escolhe o ponto ACEITO mais próximo (não o primeiro da lista).
+        PontoDeEncaixe maisProximo = null;
+        float distMaisProximo = float.MaxValue;
+        float raioMaisProximo = 0f;
+
         for (int i = 0; i < pontos.Length; i++)
         {
             PontoDeEncaixe ponto = pontos[i];
-
-            // Verifica se o ponto aceita este objeto e se está perto o suficiente
             if (!ponto.AceitaObjeto(gameObject)) continue;
 
-            float distancia = Vector3.Distance(transform.position, ponto.transform.position);
-            if (distancia <= ponto.RaioDeSnap)
+            float dist = Mathf.Min(
+                Vector3.Distance(posObjeto, ponto.transform.position),
+                Vector3.Distance(posJogador, ponto.transform.position));
+
+            if (dist < distMaisProximo)
             {
-                ponto.EncaixarObjeto(transform);
-                return;
+                distMaisProximo = dist;
+                maisProximo = ponto;
+                raioMaisProximo = ponto.RaioDeSnap;
             }
+        }
+
+        // DIAGNÓSTICO temporário: mostra a distância até o ponto aceito mais próximo.
+        if (maisProximo == null)
+            Debug.LogWarning("[ArrastarItem] Soltar -> NENHUM ponto de encaixe aceita este objeto (existe PontoDeEncaixe na cena? tag bate? está ocupado?)");
+        else
+            Debug.Log("[ArrastarItem] Soltar -> ponto '" + maisProximo.name + "' em " + maisProximo.transform.position
+                + " | dist " + distMaisProximo.ToString("0.00") + " (raio " + raioMaisProximo.ToString("0.00") + ") -> "
+                + (distMaisProximo <= raioMaisProximo ? "ENCAIXOU" : "longe demais, caiu"));
+
+        if (maisProximo != null && distMaisProximo <= raioMaisProximo)
+        {
+            maisProximo.EncaixarObjeto(transform);
+            return;
         }
 
         // Se não encaixou em ninguém, religa a gravidade e aplica cooldown

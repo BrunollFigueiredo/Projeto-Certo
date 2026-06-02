@@ -1,157 +1,169 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Fusion;
 
-// Drag & drop LOCAL (sem rede): toca e arrasta enquanto segura o dedo.
-// Versao de teste, sem Fusion — o NetworkObject/NetworkTransform estava
-// brigando com a escrita direta de transform.position e travava o arraste.
-// Box Collider (nao MeshCollider) + Rigidbody obrigatorio.
-public class ArrastarCaixa : MonoBehaviour
+// Deixa o jogador arrastar a caixa com o toque (ou clique no editor).
+// O movimento é feito no FixedUpdateNetwork pra funcionar certo na rede.
+// A caixa precisa de Box Collider, Rigidbody, NetworkObject e NetworkTransform.
+public class ArrastarCaixa : NetworkBehaviour
 {
-    private bool _arrastando = false;
-    private Camera _cam;
-    private Rigidbody _rb;
-    private float _profundidadeTela; // distancia do objeto a camera ao iniciar o drag
-    private float _alturaFixa;       // Y do objeto nao muda durante o drag
+    private bool arrastando = false;
+    private bool querSoltar = false;     // guarda que o jogador soltou pra tratar no tick
+    private Camera cameraJogador;
+    private Rigidbody corpo;
+    private float profundidade;          // distância da caixa até a câmera quando peguei
+    private float alturaTravada;         // mantém o Y pra caixa não subir nem descer
+    private Vector2 posicaoDedo;         // última posição do dedo/mouse na tela
 
-    private void Start()
+    public override void Spawned()
     {
-        _rb  = GetComponent<Rigidbody>();
+        corpo = GetComponent<Rigidbody>();
 
-        if (_rb != null)
+        if (corpo != null)
         {
-            _rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-            _rb.interpolation = RigidbodyInterpolation.Interpolate;
-            _rb.freezeRotation = true;
+            corpo.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            corpo.interpolation = RigidbodyInterpolation.Interpolate;
+            corpo.freezeRotation = true;
         }
     }
 
+    // O Update só lê o toque. Quem move a caixa é o FixedUpdateNetwork.
     private void Update()
     {
-        if (_cam == null)
+        if (cameraJogador == null)
         {
-            _cam = Player.LocalCamera != null ? Player.LocalCamera : Camera.main;
-            if (_cam == null) return;
+            cameraJogador = Player.LocalCamera != null ? Player.LocalCamera : Camera.main;
+            if (cameraJogador == null) return;
         }
 
-        // Le o ponteiro de forma unificada: a MESMA fonte (toque ou mouse) que
-        // comeca o arraste tambem o continua e o finaliza. No Device Simulator o
-        // gesto segurado e reportado como TOQUE (nao como mouse mantido), entao
-        // misturar os dois caminhos travava o drag no meio. Prioriza toque quando
-        // existe; cai no mouse so quando nao ha toque (editor sem simulador).
-        bool down, held, up;
-        Vector2 pos;
-        LerPonteiro(out down, out held, out up, out pos);
+        // Lê o toque ou o mouse (o que estiver disponível)
+        bool pressionou, segurando, soltou;
+        Vector2 posicao;
+        LerToque(out pressionou, out segurando, out soltou, out posicao);
 
-        if (!_arrastando)
+        if (!arrastando)
         {
-            if (down && !SobreUI() && RaycastAcertouEste(pos))
-                IniciarArrastar();
+            // Começa a arrastar se o toque acertou a caixa (e não foi na UI)
+            if (pressionou && !TocandoNaUI() && RaioAcertouCaixa(posicao))
+                ComecarArraste(posicao);
         }
         else
         {
-            if (held) ContinuarArrastar(pos);
-            if (up)   SoltarArrastar();
+            if (segurando) posicaoDedo = posicao;   // o tick usa essa posição
+            if (soltou) querSoltar = true;
         }
     }
 
-    // ─── Leitura unificada do ponteiro (toque ou mouse) ──────────────────────
-
-    private void LerPonteiro(out bool down, out bool held, out bool up, out Vector2 pos)
+    // Movimento da caixa no tick da rede
+    public override void FixedUpdateNetwork()
     {
-        down = held = up = false;
-        pos = Vector2.zero;
+        if (!arrastando && !querSoltar) return;
 
-        if (Input.touchCount > 0)
+        // Na rede, só quem tem a autoridade pode mover a caixa.
+        // Enquanto não tenho, fico pedindo e não mexo na posição.
+        if (!HasStateAuthority)
         {
-            Touch t = Input.GetTouch(0);
-            pos  = t.position;
-            down = t.phase == TouchPhase.Began;
-            held = t.phase == TouchPhase.Began
-                || t.phase == TouchPhase.Moved
-                || t.phase == TouchPhase.Stationary;
-            up   = t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled;
+            Object.RequestStateAuthority();
             return;
         }
 
-        pos  = Input.mousePosition;
-        down = Input.GetMouseButtonDown(0);
-        held = Input.GetMouseButton(0);
-        up   = Input.GetMouseButtonUp(0);
+        if (querSoltar)
+        {
+            querSoltar = false;
+            arrastando = false;
+            if (corpo != null) corpo.isKinematic = false;   // liga a física de novo
+            return;
+        }
+
+        if (cameraJogador == null) return;
+
+        // Transforma a posição do dedo na tela em uma posição no mundo
+        Vector3 pontoNaTela = new Vector3(posicaoDedo.x, posicaoDedo.y, profundidade);
+        Vector3 destino = cameraJogador.ScreenToWorldPoint(pontoNaTela);
+        destino.y = alturaTravada;
+
+        transform.position = destino;
     }
 
-    private bool SobreUI()
+    private void ComecarArraste(Vector2 posicao)
+    {
+        arrastando = true;
+        posicaoDedo = posicao;
+        alturaTravada = transform.position.y;
+        profundidade = cameraJogador.WorldToScreenPoint(transform.position).z;
+
+        // Pede a autoridade pra conseguir mover a caixa na rede
+        if (!HasStateAuthority) Object.RequestStateAuthority();
+
+        if (corpo != null)
+        {
+            corpo.linearVelocity = Vector3.zero;
+            corpo.angularVelocity = Vector3.zero;
+            corpo.isKinematic = true;
+        }
+    }
+
+    // Lê a entrada: usa o toque se tiver dedo na tela, senão usa o mouse.
+    private void LerToque(out bool pressionou, out bool segurando, out bool soltou, out Vector2 posicao)
+    {
+        pressionou = segurando = soltou = false;
+        posicao = Vector2.zero;
+
+        if (Input.touchCount > 0)
+        {
+            Touch dedo = Input.GetTouch(0);
+            posicao = dedo.position;
+            pressionou = dedo.phase == TouchPhase.Began;
+            segurando = dedo.phase == TouchPhase.Began
+                     || dedo.phase == TouchPhase.Moved
+                     || dedo.phase == TouchPhase.Stationary;
+            soltou = dedo.phase == TouchPhase.Ended || dedo.phase == TouchPhase.Canceled;
+            return;
+        }
+
+        posicao = Input.mousePosition;
+        pressionou = Input.GetMouseButtonDown(0);
+        segurando = Input.GetMouseButton(0);
+        soltou = Input.GetMouseButtonUp(0);
+    }
+
+    private bool TocandoNaUI()
     {
         return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
     }
 
-    // ─── Raycast ignora collider do jogador ─────────────────────────────────
-
-    private bool RaycastAcertouEste(Vector2 posicaoTela)
+    // Dispara um raio da câmera e vê se acertou esta caixa.
+    private bool RaioAcertouCaixa(Vector2 posicaoNaTela)
     {
-        if (_cam == null) return false;
-        // Ignora a layer "LocalPlayer": o corpo do jogador local fica nela e,
-        // como a camera e em primeira pessoa, o raio bateria primeiro no proprio
-        // corpo invisivel e nunca chegaria na caixa.
-        Ray ray = _cam.ScreenPointToRay(posicaoTela);
-        int localPlayerLayer = LayerMask.NameToLayer("LocalPlayer");
-        int mascara = localPlayerLayer >= 0 ? ~(1 << localPlayerLayer) : Physics.DefaultRaycastLayers;
-        RaycastHit[] hits = Physics.RaycastAll(ray, 50f, mascara);
-        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        if (cameraJogador == null) return false;
 
-        foreach (RaycastHit hit in hits)
+        // Ignora a camada "LocalPlayer" pra o raio não bater no corpo do
+        // próprio jogador (a câmera fica em primeira pessoa, dentro dele).
+        Ray raio = cameraJogador.ScreenPointToRay(posicaoNaTela);
+        int camadaJogador = LayerMask.NameToLayer("LocalPlayer");
+        int mascara = camadaJogador >= 0 ? ~(1 << camadaJogador) : Physics.DefaultRaycastLayers;
+        RaycastHit[] batidas = Physics.RaycastAll(raio, 50f, mascara);
+        System.Array.Sort(batidas, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (RaycastHit batida in batidas)
         {
-            if (hit.collider.isTrigger) continue;
-            if (hit.collider.CompareTag("Player")) continue;
+            if (batida.collider.isTrigger) continue;
+            if (batida.collider.CompareTag("Player")) continue;
 
-            bool acertou = hit.collider.transform == transform
-                        || hit.collider.transform.IsChildOf(transform);
+            bool acertou = batida.collider.transform == transform
+                        || batida.collider.transform.IsChildOf(transform);
             if (acertou) return true;
             break;
         }
         return false;
     }
 
-    // ─── Drag ───────────────────────────────────────────────────────────────
-
-    private void IniciarArrastar()
-    {
-        _arrastando = true;
-        _alturaFixa = transform.position.y;
-
-        // Profundidade do objeto na tela: usada no drag em screen-space
-        _profundidadeTela = _cam.WorldToScreenPoint(transform.position).z;
-
-        if (_rb != null)
-        {
-            _rb.linearVelocity  = Vector3.zero;
-            _rb.angularVelocity = Vector3.zero;
-            _rb.isKinematic     = true;
-        }
-    }
-
-    private void ContinuarArrastar(Vector2 posicaoTela)
-    {
-        if (!_arrastando || _cam == null) return;
-
-        // Converte posicao da tela para mundo mantendo a mesma profundidade
-        // Isso funciona bem com qualquer angulo de camera
-        Vector3 screenPos = new Vector3(posicaoTela.x, posicaoTela.y, _profundidadeTela);
-        Vector3 destino   = _cam.ScreenToWorldPoint(screenPos);
-        destino.y         = _alturaFixa; // trava altura
-
-        transform.position = destino;
-    }
-
-    private void SoltarArrastar()
-    {
-        _arrastando = false;
-
-        if (_rb != null)
-            _rb.isKinematic = false;
-    }
-
     private void OnDisable()
     {
-        if (_arrastando) SoltarArrastar();
+        if (arrastando)
+        {
+            arrastando = false;
+            if (corpo != null) corpo.isKinematic = false;
+        }
     }
 }

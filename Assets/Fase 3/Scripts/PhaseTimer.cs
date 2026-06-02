@@ -2,12 +2,17 @@ using Fusion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 // Cronômetro regressivo sincronizado. Muda de cor conforme o tempo diminui.
+// Timer de derrota padrão de TODAS as fases: ao zerar, reinicia a fase
+// (recarrega a cena atual). Comece a fase iniciando este componente junto.
 public class PhaseTimer : NetworkBehaviour
 {
     [SerializeField] private float tempoTotal = 180f;
     [SerializeField] private TextMeshProUGUI textoTimer;
+    [SerializeField] private bool reiniciarFaseNoFim = true;  // ao zerar, recarrega a cena
+    [SerializeField] private float delayReinicio = 1.5f;      // tempo mostrando a mensagem antes de reiniciar
     [SerializeField] private UnityEvent OnGameOver;
 
     [Networked] private float tempoRestante { get; set; }
@@ -51,7 +56,17 @@ public class PhaseTimer : NetworkBehaviour
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_GameOver() => OnGameOver?.Invoke();
+    private void RPC_GameOver()
+    {
+        OnGameOver?.Invoke();
+
+        // Reinicia a fase: recarrega a cena atual do zero em todos os clientes.
+        if (reiniciarFaseNoFim)
+        {
+            FeedbackUI.Mostrar("Tempo esgotado! Reiniciando a fase...");
+            TransicaoFase.Ir(Runner, SceneManager.GetActiveScene().name, delayReinicio);
+        }
+    }
 
     private void AtualizarTexto()
     {

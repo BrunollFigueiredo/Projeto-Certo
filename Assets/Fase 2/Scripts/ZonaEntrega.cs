@@ -70,6 +70,13 @@ public class ZonaEntrega : NetworkBehaviour
         // Só aceita objetos com a tag "Pegavel"
         if (!other.CompareTag("Pegavel")) return;
 
+        // Ignora objetos que estão SEGURADOS ou ENCAIXADOS na prensa: nesses
+        // estados o Rigidbody é kinematic. A entrega só vale para objetos que
+        // chegam pela física (soltos na esteira). Sem isso, o objeto sumia ao ser
+        // colocado na prensa, porque encostava no trigger da zona e era despawnado.
+        Rigidbody rbOutro = other.GetComponent<Rigidbody>();
+        if (rbOutro != null && rbOutro.isKinematic) return;
+
         // Só o host processa a entrega e remove o objeto. Remover um
         // NetworkObject fora do dono causa erro no Fusion, por isso só
         // o StateAuthority age aqui — o Despawn sincroniza para todos.

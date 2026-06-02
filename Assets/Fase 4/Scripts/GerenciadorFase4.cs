@@ -1,6 +1,7 @@
 using Fusion;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GerenciadorFase4 : NetworkBehaviour
 {
@@ -55,8 +56,8 @@ public class GerenciadorFase4 : NetworkBehaviour
         TempoRestante -= Runner.DeltaTime;
         if (TempoRestante <= 0f)
         {
-            TempoRestante = tempoTotal;
-            RPC_TeleportarTodos();
+            TempoRestante = 0f;
+            RPC_ReiniciarFase();
         }
     }
 
@@ -106,22 +107,11 @@ public class GerenciadorFase4 : NetworkBehaviour
         TransicaoFase.Ir(Runner, cenaFinal, delayFim);
     }
 
-    // Disparado pela StateAuthority para todos quando o timer zera
+    // Timer zerou: reinicia a fase recarregando a cena atual em todos.
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_TeleportarTodos()
+    private void RPC_ReiniciarFase()
     {
-        Transform spawn = SpawnInicio != null
-            ? SpawnInicio
-            : BasicSpawner.PontoDeSpawn(BasicSpawner.PersonagemLocal);
-
-        if (spawn == null || Player.LocalTransform == null) return;
-
-        NetworkCharacterController ncc = Player.LocalTransform.GetComponent<NetworkCharacterController>();
-        if (ncc != null)
-            ncc.Teleport(spawn.position, spawn.rotation);
-        else
-            Player.LocalTransform.SetPositionAndRotation(spawn.position, spawn.rotation);
-
-        FeedbackUI.Mostrar("Tempo esgotado! Voltando ao inicio...");
+        FeedbackUI.Mostrar("Tempo esgotado! Reiniciando a fase...");
+        TransicaoFase.Ir(Runner, SceneManager.GetActiveScene().name, 1.5f);
     }
 }

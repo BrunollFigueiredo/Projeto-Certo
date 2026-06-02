@@ -946,29 +946,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slides:
-  - texto: "Kofi e Aldric caminham lado a lado em dire\xE7\xE3o ao pedestal. Seus
-      passos ecoam no sal\xE3o vazio. A luz desce vertical sobre a recompensa."
   - texto: "O Arquiteto fala pela \xFAltima vez."
-  - texto: "\"Voc\xEAs chegaram ao topo. Cada requisito foi cumprido. A recompensa
-      pertence a quem chegar.\""
-  - texto: "Os dois se olham. Sem palavras, estendem as m\xE3os ao mesmo tempo e
-      tocam a recompensa juntos."
-  - texto: Ela se dissolve. No lugar, um arquivo. As atas originais da Torre.
-  - texto: "Leem em sil\xEAncio. Param na mesma p\xE1gina."
-  - texto: Cada requisito de cada andar foi calibrado para que Umbra fracassasse.
-      A promessa foi mentira desde o primeiro dia.
-  - texto: O Arquiteto desaparece sem se revelar.
-  - texto: 'Os dois descem e saem da Torre. Do lado de fora, param.
-
-      No horizonte,
-      outras torres. Mesma forma. Mesma altura. Mesma promessa.'
+  - texto: "\"Voc\xEAs chegaram ao topo.\""
+  - texto: "\"A Torre n\xE3o foi constru\xEDda para que um vencesse e o outro perdesse.
+      Foi constru\xEDda para que os dois vissem o que carregam. O que foi negado
+      a um. O que foi dado ao outro sem que ele pedisse. E o que cada um \xE9 capaz
+      de fazer quando o outro est\xE1 ao lado.\""
+  - texto: "\"A recompensa n\xE3o \xE9 minha para dar. J\xE1 estava nos dois desde
+      a entrada.\""
+  - texto: "A luz se expande pelo sal\xE3o.\nAldric olha pra Kofi."
+  - texto: "\"Eu n\xE3o sabia o quanto te foi negado.\"\nKofi olha pra ele.\n\"E
+      eu n\xE3o sabia que voc\xEA desceria pra me ajudar a carregar.\""
+  - texto: "Aldric olha pra elas.\n\"Quantas ainda precisam ser subidas.\"\nKofi
+      olha tamb\xE9m.\n\"Dessa vez sabemos o caminho.\""
+  - texto: "A c\xE2mera se afasta. Tela escurece.\nA subida termina.\nA luta come\xE7a."
   painelCutscene: {fileID: 1663098039}
   textoNarrador: {fileID: 1341129611}
   botaoProximo: {fileID: 1318008774}
   textoBotaoProximo: {fileID: 574388747}
   cameraCutscene: {fileID: 0}
   nomeCenaDestino: Escolha Jogador
-  velocidadeDigitacao: 0.03
+  velocidadeDigitacao: 0.0205
 --- !u!4 &1411835394
 Transform:
   m_ObjectHideFlags: 0
