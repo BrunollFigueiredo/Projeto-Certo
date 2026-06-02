@@ -6,11 +6,13 @@ public class GerenciadorFase4 : NetworkBehaviour
 {
     public static GerenciadorFase4 Instance { get; private set; }
 
-    [Header("Portas")]
-    [SerializeField] private Transform portao1;
-    [SerializeField] private Transform portao2;
-    [SerializeField] private Transform portao3;
+    [Header("Porta")]
+    [SerializeField] private Transform porta;                       // Porta unica que abre ao completar as cores
     [SerializeField] private Vector3 offsetAberta = new Vector3(0f, 5f, 0f);
+
+    [Header("Fim de fase")]
+    [SerializeField] private string cenaFinal = "CenaFinal";        // Cutscene final (precisa estar no Build Settings)
+    [SerializeField] private float delayFim = 2f;                   // Tempo mostrando a porta aberta antes de trocar de cena
 
     [Header("Timer")]
     [SerializeField] private float tempoTotal = 300f;
@@ -21,17 +23,12 @@ public class GerenciadorFase4 : NetworkBehaviour
 
     // Estado networked
     [Networked] private float TempoRestante { get; set; }
-    [Networked] private int BoxesNaArea { get; set; }
     [Networked] private int ItensColocados { get; set; }
-    [Networked] private int JogadoresNaFinal { get; set; }
-    [Networked] private NetworkBool Portao1Aberto { get; set; }
-    [Networked] private NetworkBool Portao2Aberto { get; set; }
-    [Networked] private NetworkBool Portao3Aberto { get; set; }
+    [Networked] private NetworkBool PortaAberta { get; set; }
 
-    // Posições originais das portas (salvas no Spawned)
-    private Vector3 _posOriginalPortao1;
-    private Vector3 _posOriginalPortao2;
-    private Vector3 _posOriginalPortao3;
+    // Posicao original da porta (salva no Spawned)
+    private Vector3 _posOriginalPorta;
+    private bool _terminou; // trava local para nao disparar a transicao duas vezes
 
     private void Awake()
     {
@@ -40,25 +37,20 @@ public class GerenciadorFase4 : NetworkBehaviour
 
     public override void Spawned()
     {
-        if (portao1 != null) _posOriginalPortao1 = portao1.position;
-        if (portao2 != null) _posOriginalPortao2 = portao2.position;
-        if (portao3 != null) _posOriginalPortao3 = portao3.position;
+        if (porta != null) _posOriginalPorta = porta.position;
 
         if (HasStateAuthority)
         {
             TempoRestante = tempoTotal;
-            BoxesNaArea = 0;
             ItensColocados = 0;
-            JogadoresNaFinal = 0;
-            Portao1Aberto = false;
-            Portao2Aberto = false;
-            Portao3Aberto = false;
+            PortaAberta = false;
         }
     }
 
     public override void FixedUpdateNetwork()
     {
         if (!HasStateAuthority) return;
+        if (PortaAberta) return; // fase vencida: o timer para de contar
 
         TempoRestante -= Runner.DeltaTime;
         if (TempoRestante <= 0f)
@@ -70,21 +62,11 @@ public class GerenciadorFase4 : NetworkBehaviour
 
     public override void Render()
     {
-        // Atualiza posição das portas baseado no estado networked
-        if (portao1 != null)
-            portao1.position = Portao1Aberto
-                ? _posOriginalPortao1 + offsetAberta
-                : _posOriginalPortao1;
-
-        if (portao2 != null)
-            portao2.position = Portao2Aberto
-                ? _posOriginalPortao2 + offsetAberta
-                : _posOriginalPortao2;
-
-        if (portao3 != null)
-            portao3.position = Portao3Aberto
-                ? _posOriginalPortao3 + offsetAberta
-                : _posOriginalPortao3;
+        // Atualiza posicao da porta baseado no estado networked
+        if (porta != null)
+            porta.position = PortaAberta
+                ? _posOriginalPorta + offsetAberta
+                : _posOriginalPorta;
 
         // Atualiza UI do timer localmente
         if (textoTimer != null)
@@ -95,34 +77,33 @@ public class GerenciadorFase4 : NetworkBehaviour
         }
     }
 
-    // Chamado por AreaLimpa: delta = +1 ao entrar, -1 ao sair
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RPC_MudarBoxes(int delta)
-    {
-        BoxesNaArea = Mathf.Clamp(BoxesNaArea + delta, 0, 99);
-
-        if (BoxesNaArea == 0 && !Portao1Aberto)
-            Portao1Aberto = true;
-    }
-
-    // Chamado pelos sensores de item: delta = +1 ao colocar, -1 ao remover
+    // Chamado pelos sensores de cor (ItemAzul/ItemRoxo/ItemVermelho):
+    // delta = +1 ao colocar a cor certa, -1 ao remover.
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_MudarItens(int delta)
     {
+        if (PortaAberta) return;
+
         ItensColocados = Mathf.Clamp(ItensColocados + delta, 0, 3);
 
-        if (ItensColocados >= 3 && !Portao2Aberto)
-            Portao2Aberto = true;
+        // As 3 cores no lugar = vitoria: abre a porta e termina o jogo.
+        if (ItensColocados >= 3)
+        {
+            PortaAberta = true;
+            RPC_TerminarFase();
+        }
     }
 
-    // Chamado por PortaFinal: delta = +1 ao entrar, -1 ao sair
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    public void RPC_MudarJogadoresFinal(int delta)
+    // Vitoria: a porta ja abre via PortaAberta no Render; aqui levamos todos
+    // os jogadores ao cutscene final apos um pequeno delay.
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_TerminarFase()
     {
-        JogadoresNaFinal = Mathf.Clamp(JogadoresNaFinal + delta, 0, 2);
+        if (_terminou) return;
+        _terminou = true;
 
-        if (JogadoresNaFinal >= 2 && !Portao3Aberto)
-            Portao3Aberto = true;
+        FeedbackUI.Mostrar("Sequencia completa! A porta se abriu...");
+        TransicaoFase.Ir(Runner, cenaFinal, delayFim);
     }
 
     // Disparado pela StateAuthority para todos quando o timer zera
@@ -141,6 +122,6 @@ public class GerenciadorFase4 : NetworkBehaviour
         else
             Player.LocalTransform.SetPositionAndRotation(spawn.position, spawn.rotation);
 
-        FeedbackUI.Mostrar("Tempo esgotado! Voltando ao início...");
+        FeedbackUI.Mostrar("Tempo esgotado! Voltando ao inicio...");
     }
 }

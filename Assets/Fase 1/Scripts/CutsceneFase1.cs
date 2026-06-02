@@ -49,11 +49,9 @@ public class CutsceneFase1 : NetworkBehaviour
     private void Awake()
     {
         Ativa = true;
-    }
 
-    private void Start()
-    {
-        // Inicia a UI imediatamente sem esperar o Fusion spawnar o objeto
+        // Configuração de câmera e UI feita em Awake para não haver flash de câmera
+        // errada — Awake roda antes de qualquer lógica de rede.
         painelCutscene.SetActive(true);
         botaoProximo.gameObject.SetActive(false);
 
@@ -67,17 +65,14 @@ public class CutsceneFase1 : NetworkBehaviour
 
         if (cameraCutscene != null)
             cameraCutscene.gameObject.SetActive(true);
-
-        MostrarSlideLocal(0);
     }
 
     public override void Spawned()
     {
-        // O Fusion desativa objetos de cena até o Spawned, o que mata a coroutine
-        // de digitação iniciada no Start(). Se o slide 0 ainda não terminou de
-        // digitar, reinicia aqui (objeto já ativo) para o botão aparecer.
-        if (_ultimoSlideExibido <= 0 && !_digitacaoCompleta)
-            MostrarSlideLocal(0);
+        // O Fusion desativa objetos de cena entre Awake e Spawned, matando qualquer
+        // coroutine iniciada em Start(). A coroutine é iniciada somente aqui,
+        // após o Fusion terminar sua inicialização — o objeto já está ativo e ficará.
+        MostrarSlideLocal(0);
     }
 
     // Mostra um slide específico na tela local

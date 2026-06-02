@@ -64,9 +64,13 @@ public class PainelPrensa : MonoBehaviour
         Vector2 posicao;
         if (!DetectouToque(out posicao)) return;
 
-        // Faz um raio do toque até o mundo
+        // Faz um raio do toque até o mundo.
+        // Ignora a layer "LocalPlayer" para o raio não bater no corpo invisível
+        // do jogador local (câmera em primeira pessoa fica dentro do corpo).
         Ray ray = cam.ScreenPointToRay(posicao);
-        RaycastHit[] hits = Physics.RaycastAll(ray, 30f);
+        int localPlayerLayer = LayerMask.NameToLayer("LocalPlayer");
+        int mascara = localPlayerLayer >= 0 ? ~(1 << localPlayerLayer) : Physics.DefaultRaycastLayers;
+        RaycastHit[] hits = Physics.RaycastAll(ray, 30f, mascara);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
         // Verifica se o primeiro objeto sólido atingido foi o painel

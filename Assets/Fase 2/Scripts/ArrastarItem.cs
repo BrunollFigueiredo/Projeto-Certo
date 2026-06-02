@@ -71,47 +71,20 @@ public class ArrastarItem : MonoBehaviour
             }
         }
 
-        // Se já estou segurando este objeto: gruda na mão e espera novo toque para soltar
+        // Se já estou segurando este objeto: gruda na mão e espera um novo
+        // toque/clique (fora da UI) para soltar. DetectouToque funciona tanto
+        // com mouse no editor/simulador quanto com dedo no dispositivo — por
+        // isso o soltar volta a funcionar fora do celular.
         if (segurandoEsteObjeto)
         {
             AtualizarPosicaoNaMao();
-        }
-        if (Input.touchCount > 0)
-        {
 
-            Touch touch = Input.GetTouch(0);
-
-            if (touch.phase == TouchPhase.Began)
+            Vector2 _toqueSolta;
+            if (DetectouToque(out _toqueSolta))
             {
-
-                if (Time.time - lastTapTime < maxTimeBetweenTaps)
-                {
-
-                    tapCount++;
-                    if (tapCount == 2)
-                    {
-
-                        //onDoubleTap.Invoke(); // Dispara o evento
-
-                        Debug.Log("Toque duplo");
-                        SoltarObjeto();
-                        tapCount = 0; // Reseta o contador
-
-                    }
-
-                }
-
-                else
-                {
-
-                    tapCount = 1; // Primeiro toque
-
-                }
-
-                lastTapTime = Time.time;
-
+                SoltarObjeto();
             }
-
+            return; // enquanto seguro algo, não tento pegar outro objeto
         }
         // Não tenta pegar se está em cooldown, se já tem alguém segurando ou se a tag não bate
         if (tempoCooldown > 0f) return;
@@ -155,9 +128,14 @@ public class ArrastarItem : MonoBehaviour
     {
         if (cam == null) return;
 
-        // Dispara um raio da câmera passando pelo toque
+        // Dispara um raio da câmera passando pelo toque.
+        // Ignora a layer "LocalPlayer": o corpo do jogador local fica nela e,
+        // como a câmera é em primeira pessoa (dentro do corpo), o raio bateria
+        // primeiro no próprio corpo invisível e nunca chegaria no objeto.
         Ray ray = cam.ScreenPointToRay(posicaoToque);
-        RaycastHit[] hits = Physics.RaycastAll(ray, 30f);
+        int localPlayerLayer = LayerMask.NameToLayer("LocalPlayer");
+        int mascara = localPlayerLayer >= 0 ? ~(1 << localPlayerLayer) : Physics.DefaultRaycastLayers;
+        RaycastHit[] hits = Physics.RaycastAll(ray, 30f, mascara);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
         for (int i = 0; i < hits.Length; i++)
@@ -192,11 +170,13 @@ public class ArrastarItem : MonoBehaviour
     // Pega o objeto: marca como segurando e desliga a física
     void PegarObjeto()
     {
-        if (BasicSpawner.PersonagemLocal == Personagem.Aldric)
-        {
-            FeedbackUI.Mostrar("Apenas Kofi pode carregar objetos.");
-            return;
-        }
+        // TESTE: restrição de personagem desativada para testar com Aldric.
+        // (Originalmente apenas Kofi podia carregar objetos.)
+        //if (BasicSpawner.PersonagemLocal == Personagem.Aldric)
+        //{
+        //    FeedbackUI.Mostrar("Apenas Kofi pode carregar objetos.");
+        //    return;
+        //}
         segurandoEsteObjeto = true;
         objetoSendoSeguro = this;
 

@@ -1,24 +1,21 @@
-using Fusion;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-// Drag & drop: toca e arrasta enquanto segura o dedo.
-// Coloque nas caixas junto com NetworkObject + NetworkTransform.
+// Drag & drop LOCAL (sem rede): toca e arrasta enquanto segura o dedo.
+// Versao de teste, sem Fusion — o NetworkObject/NetworkTransform estava
+// brigando com a escrita direta de transform.position e travava o arraste.
 // Box Collider (nao MeshCollider) + Rigidbody obrigatorio.
-public class ArrastarCaixa : NetworkBehaviour
+public class ArrastarCaixa : MonoBehaviour
 {
-    private int _dedoId = -1;
     private bool _arrastando = false;
     private Camera _cam;
     private Rigidbody _rb;
-    private NetworkObject _netObj;
     private float _profundidadeTela; // distancia do objeto a camera ao iniciar o drag
     private float _alturaFixa;       // Y do objeto nao muda durante o drag
 
     private void Start()
     {
         _rb  = GetComponent<Rigidbody>();
-        _netObj = GetComponent<NetworkObject>();
 
         if (_rb != null)
         {
@@ -33,83 +30,73 @@ public class ArrastarCaixa : NetworkBehaviour
         if (_cam == null)
         {
             _cam = Player.LocalCamera != null ? Player.LocalCamera : Camera.main;
-            if (_cam == null)
-            {
-                Debug.LogWarning("[ArrastarCaixa] camera nula! LocalCamera=" + Player.LocalCamera + " main=" + Camera.main);
-                return;
-            }
-            Debug.Log("[ArrastarCaixa] camera encontrada: " + _cam.name);
+            if (_cam == null) return;
         }
 
-#if UNITY_EDITOR
-        AtualizarMouse();
-        AtualizarToques();
-#else
-        AtualizarToques();
-#endif
+        // Le o ponteiro de forma unificada: a MESMA fonte (toque ou mouse) que
+        // comeca o arraste tambem o continua e o finaliza. No Device Simulator o
+        // gesto segurado e reportado como TOQUE (nao como mouse mantido), entao
+        // misturar os dois caminhos travava o drag no meio. Prioriza toque quando
+        // existe; cai no mouse so quando nao ha toque (editor sem simulador).
+        bool down, held, up;
+        Vector2 pos;
+        LerPonteiro(out down, out held, out up, out pos);
+
+        if (!_arrastando)
+        {
+            if (down && !SobreUI() && RaycastAcertouEste(pos))
+                IniciarArrastar();
+        }
+        else
+        {
+            if (held) ContinuarArrastar(pos);
+            if (up)   SoltarArrastar();
+        }
     }
 
-    // ─── Touch ──────────────────────────────────────────────────────────────
+    // ─── Leitura unificada do ponteiro (toque ou mouse) ──────────────────────
 
-    private void AtualizarToques()
+    private void LerPonteiro(out bool down, out bool held, out bool up, out Vector2 pos)
     {
+        down = held = up = false;
+        pos = Vector2.zero;
+
         if (Input.touchCount > 0)
-            Debug.Log("[ArrastarCaixa] touches=" + Input.touchCount + " dedoId=" + _dedoId);
-
-        for (int i = 0; i < Input.touchCount; i++)
         {
-            Touch t = Input.GetTouch(i);
-
-            if (t.phase == TouchPhase.Began && _dedoId == -1)
-            {
-                bool sobreUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(t.fingerId);
-                bool acertou = RaycastAcertouEste(t.position);
-                Debug.Log("[ArrastarCaixa] Toque! sobreUI=" + sobreUI + " acertou=" + acertou + " pos=" + t.position);
-                if (sobreUI) continue;
-                if (acertou) IniciarArrastar(t.fingerId);
-            }
-
-            if (t.fingerId == _dedoId)
-            {
-                if (t.phase == TouchPhase.Moved || t.phase == TouchPhase.Stationary)
-                    ContinuarArrastar(t.position);
-                else if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
-                    SoltarArrastar();
-            }
+            Touch t = Input.GetTouch(0);
+            pos  = t.position;
+            down = t.phase == TouchPhase.Began;
+            held = t.phase == TouchPhase.Began
+                || t.phase == TouchPhase.Moved
+                || t.phase == TouchPhase.Stationary;
+            up   = t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled;
+            return;
         }
+
+        pos  = Input.mousePosition;
+        down = Input.GetMouseButtonDown(0);
+        held = Input.GetMouseButton(0);
+        up   = Input.GetMouseButtonUp(0);
     }
 
-    // ─── Mouse (Editor) ─────────────────────────────────────────────────────
-
-#if UNITY_EDITOR
-    private void AtualizarMouse()
+    private bool SobreUI()
     {
-        if (Input.GetMouseButtonDown(0) && _dedoId == -1)
-        {
-            bool acertou = RaycastAcertouEste(Input.mousePosition);
-            Debug.Log("[ArrastarCaixa] MouseDown! acertou=" + acertou + " pos=" + Input.mousePosition);
-            if (acertou) IniciarArrastar(-99);
-        }
-        if (_dedoId == -99)
-        {
-            if (Input.GetMouseButton(0))
-                ContinuarArrastar(Input.mousePosition);
-            else if (Input.GetMouseButtonUp(0))
-                SoltarArrastar();
-        }
+        return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
     }
-#endif
 
     // ─── Raycast ignora collider do jogador ─────────────────────────────────
 
     private bool RaycastAcertouEste(Vector2 posicaoTela)
     {
         if (_cam == null) return false;
+        // Ignora a layer "LocalPlayer": o corpo do jogador local fica nela e,
+        // como a camera e em primeira pessoa, o raio bateria primeiro no proprio
+        // corpo invisivel e nunca chegaria na caixa.
         Ray ray = _cam.ScreenPointToRay(posicaoTela);
-        RaycastHit[] hits = Physics.RaycastAll(ray, 50f);
+        int localPlayerLayer = LayerMask.NameToLayer("LocalPlayer");
+        int mascara = localPlayerLayer >= 0 ? ~(1 << localPlayerLayer) : Physics.DefaultRaycastLayers;
+        RaycastHit[] hits = Physics.RaycastAll(ray, 50f, mascara);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-
-        if (hits.Length == 0) { Debug.Log("[ArrastarCaixa] Raycast: nenhum hit"); return false; }
 
         foreach (RaycastHit hit in hits)
         {
@@ -118,7 +105,6 @@ public class ArrastarCaixa : NetworkBehaviour
 
             bool acertou = hit.collider.transform == transform
                         || hit.collider.transform.IsChildOf(transform);
-            Debug.Log("[ArrastarCaixa] Primeiro solido: " + hit.collider.name + " acertou=" + acertou);
             if (acertou) return true;
             break;
         }
@@ -127,18 +113,13 @@ public class ArrastarCaixa : NetworkBehaviour
 
     // ─── Drag ───────────────────────────────────────────────────────────────
 
-    private void IniciarArrastar(int dedoId)
+    private void IniciarArrastar()
     {
-        Debug.Log("[ArrastarCaixa] IniciarArrastar! authority=" + (_netObj != null ? _netObj.HasStateAuthority.ToString() : "sem NetworkObject"));
-        _dedoId   = dedoId;
         _arrastando = true;
         _alturaFixa = transform.position.y;
 
         // Profundidade do objeto na tela: usada no drag em screen-space
         _profundidadeTela = _cam.WorldToScreenPoint(transform.position).z;
-
-        if (_netObj != null && !_netObj.HasStateAuthority)
-            _netObj.RequestStateAuthority();
 
         if (_rb != null)
         {
@@ -163,7 +144,6 @@ public class ArrastarCaixa : NetworkBehaviour
 
     private void SoltarArrastar()
     {
-        _dedoId     = -1;
         _arrastando = false;
 
         if (_rb != null)

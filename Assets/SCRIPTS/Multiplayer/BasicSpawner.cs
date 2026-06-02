@@ -118,12 +118,35 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             Transform ponto = isAldric ? pontoDeSpawnAldric : pontoDeSpawnKofi;
             Vector3 posicao = ponto != null ? ponto.position : transform.position;
             Quaternion rotacao = ponto != null ? ponto.rotation : transform.rotation;
-            runner.Spawn(prefab, posicao, rotacao, player);
+            NetworkObject spawned = runner.Spawn(prefab, posicao, rotacao, player);
+            if (spawned != null)
+                _spawnedCharacters[player] = spawned;
         }
     }
+
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
         JogadoresConectados--;
+
+        // Remove o personagem do jogador que saiu para não deixar fantasmas na sessão.
+        // Em Shared Mode o Fusion transfere a StateAuthority ao master client quando
+        // o dono desconecta, então o master pode fazer o Despawn.
+        if (runner.IsSharedModeMasterClient)
+        {
+            // Tenta pelo objeto registrado via Runner.SetPlayerObject (PlayerInteractor)
+            NetworkObject playerObj = runner.GetPlayerObject(player);
+            if (playerObj != null)
+            {
+                runner.Despawn(playerObj);
+            }
+            // Fallback: personagem rastreado localmente no spawn
+            else if (_spawnedCharacters.TryGetValue(player, out NetworkObject charObj))
+            {
+                if (charObj != null) runner.Despawn(charObj);
+            }
+        }
+
+        _spawnedCharacters.Remove(player);
     }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
