@@ -1,4 +1,5 @@
 using System.Collections;
+using Fusion;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -136,8 +137,26 @@ public class PainelPrensa : MonoBehaviour
     // Botão Confirmar: aciona a prensa com a escala escolhida
     public void Confirmar()
     {
+        PedirAutoridadeDoObjeto();
         prensa.Ativar(escalaEscolhida);
         FecharUI();
+    }
+
+    // Pede a autoridade do objeto encaixado pra quem opera a prensa (Aldric).
+    // O objeto pertence a quem o carregou (Kofi), então sem isso as mudanças de
+    // escala/posição feitas aqui não sincronizariam na rede.
+    void PedirAutoridadeDoObjeto()
+    {
+        if (prensa == null || prensa.PontoDoObjeto == null) return;
+
+        Transform obj = prensa.PontoDoObjeto.ObjetoEncaixado;
+        if (obj == null) return;
+
+        NetworkObject netObj = obj.GetComponent<NetworkObject>();
+        if (netObj != null && !netObj.HasStateAuthority)
+        {
+            netObj.RequestStateAuthority();
+        }
     }
 
     // Botão Enviar: levanta a prensa e empurra o objeto pela esteira
@@ -148,6 +167,7 @@ public class PainelPrensa : MonoBehaviour
         if (prensa.PontoDoObjeto == null) return;
         if (!prensa.PontoDoObjeto.Ocupado) return;
 
+        PedirAutoridadeDoObjeto();
         StartCoroutine(SequenciaEnviar());
         FecharUI();
     }

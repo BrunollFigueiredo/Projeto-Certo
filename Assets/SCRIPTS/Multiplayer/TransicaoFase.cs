@@ -15,12 +15,23 @@ public class TransicaoFase : MonoBehaviour
 
     private IEnumerator Executar(NetworkRunner runner, string cena, float delay)
     {
-        yield return new WaitForSeconds(delay);
+        // Tempo real (não trava se o jogo pausar com Time.timeScale = 0)
+        yield return new WaitForSecondsRealtime(delay);
 
+        // Encerra a rede e ESPERA o shutdown terminar antes de recarregar.
+        // Sem essa espera, a cena nova tenta abrir a rede com a sessão antiga
+        // ainda aberta (mesmo nome de sessão) e dá conflito / erro de conexão.
         if (runner != null && runner.IsRunning)
         {
-            runner.Shutdown();
+            var tarefa = runner.Shutdown();
+            while (tarefa != null && !tarefa.IsCompleted)
+            {
+                yield return null;
+            }
         }
+
+        // Uma folga de um frame pra rede liberar de vez
+        yield return null;
 
         SceneManager.LoadScene(cena);
         Destroy(gameObject);

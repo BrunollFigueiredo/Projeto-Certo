@@ -55,9 +55,10 @@ public class PontoDeEncaixe : MonoBehaviour
         Rigidbody rb = objeto.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.isKinematic = true;
+            // Zera a velocidade ANTES de virar kinematic (zerar depois dá warning)
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
         }
 
         // Desativa o script de arrastar para o jogador não pegar de novo

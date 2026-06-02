@@ -3509,7 +3509,7 @@ MonoBehaviour:
   controlesMobile:
   - {fileID: 479358607}
   - {fileID: 0}
-  velocidadeDigitacao: 0.0204
+  velocidadeDigitacao: 0.01
 --- !u!4 &1743340383
 Transform:
   m_ObjectHideFlags: 0
@@ -4473,7 +4473,7 @@ Transform:
   m_GameObject: {fileID: 2004705379}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 143.94, y: 156.27, z: 374.64}
+  m_LocalPosition: {x: 142.89, y: 156.27, z: 374.64}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5588,8 +5588,6 @@ GameObject:
   - component: {fileID: 1632819904}
   - component: {fileID: 1632819902}
   - component: {fileID: 8719995252343835768}
-  - component: {fileID: 8719995252343835770}
-  - component: {fileID: 8719995252343835769}
   m_Layer: 0
   m_Name: "Carv\xE3o.005"
   m_TagString: Pegavel
@@ -5902,8 +5900,6 @@ GameObject:
   - component: {fileID: 643821548}
   - component: {fileID: 643821546}
   - component: {fileID: 5652291072396797935}
-  - component: {fileID: 5652291072396797937}
-  - component: {fileID: 5652291072396797936}
   m_Layer: 0
   m_Name: "Carv\xE3o.003"
   m_TagString: Pegavel
@@ -6120,8 +6116,6 @@ GameObject:
   - component: {fileID: 1262393205}
   - component: {fileID: 1262393203}
   - component: {fileID: 7118649313347088949}
-  - component: {fileID: 7118649313347088951}
-  - component: {fileID: 7118649313347088950}
   m_Layer: 0
   m_Name: "Carv\xE3o"
   m_TagString: Pegavel
@@ -6559,8 +6553,6 @@ GameObject:
   - component: {fileID: 1892528130}
   - component: {fileID: 1892528128}
   - component: {fileID: 6412953436110257886}
-  - component: {fileID: 6412953436110257888}
-  - component: {fileID: 6412953436110257887}
   m_Layer: 0
   m_Name: "Carv\xE3o.002"
   m_TagString: Pegavel
@@ -6729,8 +6721,6 @@ GameObject:
   - component: {fileID: 1870139997}
   - component: {fileID: 1870139995}
   - component: {fileID: 7791198699916486893}
-  - component: {fileID: 7791198699916486895}
-  - component: {fileID: 7791198699916486894}
   m_Layer: 0
   m_Name: "Carv\xE3o.004"
   m_TagString: Pegavel
@@ -6849,43 +6839,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1.0000001
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &5652291072396797936
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2463544009540483884}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SortKey: 3931817717
-  ObjectInterest: 1
-  Flags: 786433
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 643821548}
-  - {fileID: 5652291072396797937}
-  ForceRemoteRenderTimeframe: 0
---- !u!114 &5652291072396797937
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2463544009540483884}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _stateAuthorityChangeErrorCorrectionDelta: 0
-  SyncScale: 0
-  SyncParent: 0
-  _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
 --- !u!4 &5680519942959665666
 Transform:
   m_ObjectHideFlags: 0
@@ -7133,43 +7086,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1.0000001
   m_Center: {x: 0.0000019073486, y: 0, z: 0}
---- !u!114 &6412953436110257887
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5003612431218171703}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _stateAuthorityChangeErrorCorrectionDelta: 0
-  SyncScale: 0
-  SyncParent: 0
-  _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
---- !u!114 &6412953436110257888
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5003612431218171703}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SortKey: 952828439
-  ObjectInterest: 1
-  Flags: 786433
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 1892528130}
-  - {fileID: 6412953436110257887}
-  ForceRemoteRenderTimeframe: 0
 --- !u!1 &6507901976958198078
 GameObject:
   m_ObjectHideFlags: 0
@@ -7345,43 +7261,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1.0000001
   m_Center: {x: 0.0000019073486, y: 0, z: 0}
---- !u!114 &7118649313347088950
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3411729110817232884}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _stateAuthorityChangeErrorCorrectionDelta: 0
-  SyncScale: 0
-  SyncParent: 0
-  _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
---- !u!114 &7118649313347088951
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3411729110817232884}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SortKey: 1190605397
-  ObjectInterest: 1
-  Flags: 786433
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 1262393205}
-  - {fileID: 7118649313347088950}
-  ForceRemoteRenderTimeframe: 0
 --- !u!4 &7129599249840071162
 Transform:
   m_ObjectHideFlags: 0
@@ -7690,43 +7569,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1.0000001
   m_Center: {x: 0, y: 0.0000019073486, z: 0}
---- !u!114 &7791198699916486894
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5560912517822114292}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _stateAuthorityChangeErrorCorrectionDelta: 0
-  SyncScale: 0
-  SyncParent: 0
-  _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
---- !u!114 &7791198699916486895
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5560912517822114292}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SortKey: 164003518
-  ObjectInterest: 1
-  Flags: 786433
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 1870139997}
-  - {fileID: 7791198699916486894}
-  ForceRemoteRenderTimeframe: 0
 --- !u!1 &7959026430420075401
 GameObject:
   m_ObjectHideFlags: 0
@@ -7790,8 +7632,6 @@ GameObject:
   - component: {fileID: 1870140000}
   - component: {fileID: 1870139998}
   - component: {fileID: 8609360077908733820}
-  - component: {fileID: 8609360077908733822}
-  - component: {fileID: 8609360077908733821}
   m_Layer: 0
   m_Name: "Carv\xE3o.001"
   m_TagString: Pegavel
@@ -8195,43 +8035,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1.0000001
   m_Center: {x: 0.0000019073486, y: 0, z: 0}
---- !u!114 &8609360077908733821
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8039782516465835650}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _stateAuthorityChangeErrorCorrectionDelta: 0
-  SyncScale: 0
-  SyncParent: 0
-  _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
---- !u!114 &8609360077908733822
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8039782516465835650}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SortKey: 3820240252
-  ObjectInterest: 1
-  Flags: 786433
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 1870140000}
-  - {fileID: 8609360077908733821}
-  ForceRemoteRenderTimeframe: 0
 --- !u!4 &8616562853568887215
 Transform:
   m_ObjectHideFlags: 0
@@ -8317,43 +8120,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1.0590014
   m_Center: {x: -0.059001315, y: 0, z: 0}
---- !u!114 &8719995252343835769
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1221111195846686379}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _stateAuthorityChangeErrorCorrectionDelta: 0
-  SyncScale: 0
-  SyncParent: 0
-  _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
---- !u!114 &8719995252343835770
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1221111195846686379}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SortKey: 1351172330
-  ObjectInterest: 1
-  Flags: 786433
-  NestedObjects: []
-  NetworkedBehaviours:
-  - {fileID: 1632819904}
-  - {fileID: 8719995252343835769}
-  ForceRemoteRenderTimeframe: 0
 --- !u!1 &8757042446242984287
 GameObject:
   m_ObjectHideFlags: 0
