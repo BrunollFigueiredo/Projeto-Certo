@@ -127,6 +127,19 @@ public class CutsceneAbertura : MonoBehaviour
         if (cameraCutscene != null)
             cameraCutscene.gameObject.SetActive(false);
 
+        // Só troca de cena DEPOIS que o jogador soltar o toque/clique. Sem isso,
+        // o mesmo toque que finalizou a cutscene "vaza" pra próxima cena e clica
+        // um botão lá embaixo do dedo (mandando de volta pro início).
+        StartCoroutine(CarregarQuandoSoltar());
+    }
+
+    IEnumerator CarregarQuandoSoltar()
+    {
+        while (Input.GetMouseButton(0) || Input.touchCount > 0)
+            yield return null;
+
+        yield return null; // um frame extra de folga
+
         SceneManager.LoadScene(nomeCenaDestino);
     }
 

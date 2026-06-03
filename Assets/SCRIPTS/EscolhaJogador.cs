@@ -8,7 +8,7 @@ public class EscolhaJogador : MonoBehaviour
     [SerializeField] private Button botaoJogador2;
     [SerializeField] private GameObject marcadorJogador1;
     [SerializeField] private GameObject marcadorJogador2;
-    [SerializeField] private string cenaJogo = "SalaEspera";
+    [SerializeField] private string cenaJogo = "Fase1";
 
     private bool escolheu = false;
 
