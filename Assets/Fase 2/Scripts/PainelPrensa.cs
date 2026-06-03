@@ -99,11 +99,13 @@ public class PainelPrensa : MonoBehaviour
     // Abre o painel da UI
     void AbrirUI()
     {
-        if (BasicSpawner.PersonagemLocal == Personagem.Kofi)
-        {
-            FeedbackUI.Mostrar("Apenas Aldric pode usar o painel.");
-            return;
-        }
+        // Liberado pro Kofi também (antes só o Aldric podia).
+        // Pra voltar a restringir, é só descomentar o bloco abaixo.
+        //if (BasicSpawner.PersonagemLocal == Personagem.Kofi)
+        //{
+        //    FeedbackUI.Mostrar("Apenas Aldric pode usar o painel.");
+        //    return;
+        //}
         uiAberta = true;
         painelUI.SetActive(true);
     }

@@ -1,45 +1,45 @@
 using UnityEngine;
-using TMPro;
 
+// Controla a entrada do jogador no celular: joystick pra andar, arrastar pra
+// olhar e botão de pulo. O cronômetro da fase fica por conta do PhaseTimer.
 public class Movimento : MonoBehaviour
 {
     public VariableJoystick joystick;
-    float tempo = 120f;
 
     [SerializeField] private float sensibilidade = 0.15f;
 
     [SerializeField] private GameObject painelJoystick;
     [SerializeField] private GameObject botaoPulo;
-    [SerializeField] private TMP_Text textoTempo;
-    [SerializeField] private bool usarTempo = true;
 
     private bool uiAtivada = false;
 
     void Start()
     {
+        // Esconde os controles até o jogador nascer
         if (painelJoystick != null) painelJoystick.SetActive(false);
         if (botaoPulo != null) botaoPulo.SetActive(false);
-        if (textoTempo != null) textoTempo.gameObject.SetActive(false);
     }
 
     void Update()
     {
         if (!Player.LocalSpawnou) return;
 
+        // Mostra os controles na primeira vez que o jogador existe
         if (!uiAtivada)
         {
             uiAtivada = true;
             if (painelJoystick != null) painelJoystick.SetActive(true);
             if (botaoPulo != null) botaoPulo.SetActive(true);
-            if (textoTempo != null) textoTempo.gameObject.SetActive(usarTempo);
         }
 
+        // Joystick -> direção de andar
         if (joystick != null)
         {
             Vector2 direction = new Vector2(joystick.Horizontal, joystick.Vertical);
             BasicSpawner.TouchMoveInput = direction;
         }
 
+        // Arrastar no lado direito da tela -> girar a câmera
         if (Input.touchCount > 0)
         {
             foreach (Touch touch in Input.touches)
@@ -53,16 +53,6 @@ public class Movimento : MonoBehaviour
                         BasicSpawner.PitchInput = Mathf.Clamp(BasicSpawner.PitchInput, -80f, 80f);
                     }
                 }
-            }
-        }
-
-        if (usarTempo)
-        {
-            tempo -= Time.deltaTime;
-            if (textoTempo != null) textoTempo.text = Mathf.CeilToInt(tempo).ToString();
-            if (tempo <= 0)
-            {
-                Debug.Log("Você Perdeu!");
             }
         }
     }
