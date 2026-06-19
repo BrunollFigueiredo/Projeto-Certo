@@ -1,99 +1,56 @@
+using Fusion;
 using UnityEngine;
 
-// Ponto onde um objeto pode ser encaixado (ex: dentro da prensa)
-public class PontoDeEncaixe : MonoBehaviour
+// Ponto onde um objeto pode ser encaixado (ex: dentro da prensa).
+// Agora em rede: o estado "ocupado" sincroniza, entao os dois jogadores sabem
+// que tem objeto na prensa (o painel do Aldric usa isso pra liberar os botoes).
+public class PontoDeEncaixe : NetworkBehaviour
 {
-    [SerializeField] private float raioDeSnap = 1.5f;      // Distância máxima para o objeto encaixar
+    [SerializeField] private float raioDeSnap = 1.5f;      // Distancia maxima para o objeto encaixar
     [SerializeField] private string tagAceita = "Pegavel"; // Tag dos objetos aceitos
 
-    private bool ocupado = false;            // Se já tem objeto encaixado
-    private Transform objetoEncaixado = null; // Referência ao objeto encaixado
+    // Estado sincronizado
+    [Networked] public NetworkBool Ocupado { get; set; }
+    [Networked] public NetworkObject ObjetoEncaixadoNet { get; set; }
 
-    // Propriedades públicas para outros scripts consultarem
-    public bool Ocupado
-    {
-        get { return ocupado; }
-    }
+    public float RaioDeSnap => raioDeSnap;
 
-    public float RaioDeSnap
-    {
-        get { return raioDeSnap; }
-    }
-
-    public Transform ObjetoEncaixado
-    {
-        get { return objetoEncaixado; }
-    }
+    // Transform do objeto encaixado (resolvido a partir do NetworkObject sincronizado)
+    public Transform ObjetoEncaixado =>
+        ObjetoEncaixadoNet != null ? ObjetoEncaixadoNet.transform : null;
 
     // Verifica se este ponto aceita o objeto
     public bool AceitaObjeto(GameObject objeto)
     {
-        // Não aceita se já tem algo encaixado
-        if (ocupado) return false;
-
-        // Verifica se a tag bate
-        if (tagAceita != "" && !objeto.CompareTag(tagAceita))
-        {
-            return false;
-        }
-
+        if (Ocupado) return false;
+        if (tagAceita != "" && !objeto.CompareTag(tagAceita)) return false;
         return true;
     }
 
-    // Encaixa o objeto no ponto (trava posição e desliga física)
-    public void EncaixarObjeto(Transform objeto)
+    // Chamado pelo host quando um objeto encaixa
+    public void Ocupar(NetworkObject obj)
     {
-        ocupado = true;
-        objetoEncaixado = objeto;
-
-        // Posiciona o objeto exatamente no ponto
-        objeto.SetParent(null);
-        objeto.position = transform.position;
-        objeto.rotation = transform.rotation;
-
-        // Desliga a física do Rigidbody para o objeto ficar parado
-        Rigidbody rb = objeto.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            // Zera a velocidade ANTES de virar kinematic (zerar depois dá warning)
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            rb.isKinematic = true;
-        }
-
-        // Desativa o script de arrastar para o jogador não pegar de novo
-        ArrastarItem pegavel = objeto.GetComponent<ArrastarItem>();
-        if (pegavel != null)
-        {
-            pegavel.enabled = false;
-        }
+        Ocupado = true;
+        ObjetoEncaixadoNet = obj;
     }
 
-    // Libera o objeto encaixado e o devolve para quem chamou
-    public Transform LiberarObjeto()
+    // Chamado pelo host quando o objeto sai (enviado pela esteira)
+    public Transform Liberar()
     {
-        if (!ocupado) return null;
-        if (objetoEncaixado == null) return null;
+        if (!Ocupado) return null;
 
-        Transform obj = objetoEncaixado;
-        ocupado = false;
-        objetoEncaixado = null;
+        Transform obj = ObjetoEncaixado;
+        Ocupado = false;
+        ObjetoEncaixadoNet = null;
         return obj;
     }
 
     // Desenha uma esfera no editor mostrando o raio de encaixe
     void OnDrawGizmosSelected()
     {
-        // Vermelho se ocupado, verde se vazio
-        if (ocupado)
-        {
-            Gizmos.color = Color.red;
-        }
-        else
-        {
-            Gizmos.color = Color.green;
-        }
-
+        // So le o estado de rede depois do objeto existir na rede (antes disso da erro)
+        bool ocupadoAgora = Application.isPlaying && Object != null && Ocupado;
+        Gizmos.color = ocupadoAgora ? Color.red : Color.green;
         Gizmos.DrawWireSphere(transform.position, raioDeSnap);
     }
 }

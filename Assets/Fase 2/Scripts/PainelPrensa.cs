@@ -5,30 +5,34 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
-// Painel touchscreen para escolher escala, confirmar prensagem e enviar pela esteira
-public class PainelPrensa : MonoBehaviour
+// Painel touchscreen pra escolher escala, prensar e enviar pela esteira.
+// Agora em rede: prensar e enviar viram RPC, entao os dois jogadores veem a
+// prensa descer/subir e o objeto mudar de tamanho. Qualquer jogador (Kofi ou
+// Aldric) pode operar o painel.
+public class PainelPrensa : NetworkBehaviour
 {
-    [SerializeField] private Prensa prensa;                       // Referência à prensa controlada
+    [SerializeField] private Prensa prensa;                       // Referencia a prensa controlada
 
     [SerializeField] private GameObject painelUI;                 // UI que aparece ao tocar no painel
     [SerializeField] private TextMeshProUGUI textoEscalaSelecionada; // Mostra a escala escolhida
-    [SerializeField] private Button botaoConfirmar;               // Botão para acionar a prensa
-    [SerializeField] private Button botaoEnviar;                  // Botão para mandar o objeto na esteira
+    [SerializeField] private Button botaoConfirmar;               // Botao para acionar a prensa
+    [SerializeField] private Button botaoEnviar;                  // Botao para mandar o objeto na esteira
 
-    [SerializeField] private float velocidadeEsteira = 4f;        // Velocidade do empurrão na esteira
-    [SerializeField] private Transform destino;                   // Para onde o objeto é lançado
+    [SerializeField] private float velocidadeEsteira = 4f;        // Velocidade do empurrao na esteira
+    [SerializeField] private float tempoAntesDeEnviar = 1.5f;     // Espera a prensa subir antes de soltar
+    [SerializeField] private Transform destino;                   // Para onde o objeto e lancado
 
     [SerializeField] private Vector3 escalaPequena = new Vector3(0.5f, 0.5f, 0.5f); // Escala "P"
     [SerializeField] private Vector3 escalaMedia = new Vector3(1f, 1f, 1f);         // Escala "M"
     [SerializeField] private Vector3 escalaGrande = new Vector3(1.5f, 1.5f, 1.5f);  // Escala "G"
 
     private Vector3 escalaEscolhida;  // Escala atualmente selecionada
-    private bool uiAberta = false;    // Se o painel UI está aberto
-    private Camera cam;               // Câmera usada para o raycast do toque
+    private bool uiAberta = false;    // Se o painel UI esta aberto
+    private Camera cam;               // Camera usada para o raycast do toque
 
     void Start()
     {
-        // Começa com a escala média selecionada e o painel fechado
+        // Comeca com a escala media selecionada e o painel fechado
         escalaEscolhida = escalaMedia;
         painelUI.SetActive(false);
         AtualizarTexto();
@@ -36,17 +40,17 @@ public class PainelPrensa : MonoBehaviour
 
     void Update()
     {
-        // Se a UI já está aberta, só atualiza o estado dos botões
+        // Se a UI ja esta aberta, so atualiza o estado dos botoes
         if (uiAberta)
         {
-            // Os botões só funcionam se tiver um objeto na prensa
+            // Os botoes so funcionam se tiver um objeto na prensa
             bool temObjeto = prensa != null && ObjetoNaPrensa();
             botaoConfirmar.interactable = temObjeto;
             botaoEnviar.interactable = temObjeto;
             return;
         }
 
-        // Garante que temos referência da câmera do jogador
+        // Garante que temos referencia da camera do jogador
         if (cam == null)
         {
             if (Player.LocalCamera != null)
@@ -65,21 +69,21 @@ public class PainelPrensa : MonoBehaviour
         Vector2 posicao;
         if (!DetectouToque(out posicao)) return;
 
-        // Faz um raio do toque até o mundo.
-        // Ignora a layer "LocalPlayer" para o raio não bater no corpo invisível
-        // do jogador local (câmera em primeira pessoa fica dentro do corpo).
+        // Faz um raio do toque ate o mundo.
+        // Ignora a layer "LocalPlayer" para o raio nao bater no corpo invisivel
+        // do jogador local (camera em primeira pessoa fica dentro do corpo).
         Ray ray = cam.ScreenPointToRay(posicao);
         int localPlayerLayer = LayerMask.NameToLayer("LocalPlayer");
         int mascara = localPlayerLayer >= 0 ? ~(1 << localPlayerLayer) : Physics.DefaultRaycastLayers;
         RaycastHit[] hits = Physics.RaycastAll(ray, 30f, mascara);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
-        // Verifica se o primeiro objeto sólido atingido foi o painel
+        // Verifica se o primeiro objeto solido atingido foi o painel
         for (int i = 0; i < hits.Length; i++)
         {
             RaycastHit hit = hits[i];
 
-            // Ignora triggers e o próprio jogador
+            // Ignora triggers e o proprio jogador
             if (hit.collider.isTrigger) continue;
             if (hit.collider.CompareTag("Player")) continue;
 
@@ -99,25 +103,20 @@ public class PainelPrensa : MonoBehaviour
     // Abre o painel da UI
     void AbrirUI()
     {
-        // Liberado pro Kofi também (antes só o Aldric podia).
-        // Pra voltar a restringir, é só descomentar o bloco abaixo.
-        //if (BasicSpawner.PersonagemLocal == Personagem.Kofi)
-        //{
-        //    FeedbackUI.Mostrar("Apenas Aldric pode usar o painel.");
-        //    return;
-        //}
+        // Liberado pro Kofi e pro Aldric usarem o painel.
+        // Pra restringir a um personagem, e so checar BasicSpawner.PersonagemLocal aqui.
         uiAberta = true;
         painelUI.SetActive(true);
     }
 
-    // Fecha o painel da UI (chamado por botão)
+    // Fecha o painel da UI (chamado por botao)
     public void FecharUI()
     {
         uiAberta = false;
         painelUI.SetActive(false);
     }
 
-    // Botões da UI para escolher a escala
+    // Botoes da UI para escolher a escala
     public void SelecionarPequeno()
     {
         escalaEscolhida = escalaPequena;
@@ -136,68 +135,63 @@ public class PainelPrensa : MonoBehaviour
         AtualizarTexto();
     }
 
-    // Botão Confirmar: aciona a prensa com a escala escolhida
+    // Botao Confirmar: manda todos prensarem com a escala escolhida
     public void Confirmar()
     {
-        PedirAutoridadeDoObjeto();
-        prensa.Ativar(escalaEscolhida);
+        if (prensa == null) return;
+        if (!ObjetoNaPrensa()) return;
+
+        RPC_Prensar(escalaEscolhida);
         FecharUI();
     }
 
-    // Pede a autoridade do objeto encaixado pra quem opera a prensa (Aldric).
-    // O objeto pertence a quem o carregou (Kofi), então sem isso as mudanças de
-    // escala/posição feitas aqui não sincronizariam na rede.
-    void PedirAutoridadeDoObjeto()
+    // RPC: a prensa desce e escala o objeto em todos os clientes
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    private void RPC_Prensar(Vector3 escala)
     {
-        if (prensa == null || prensa.PontoDoObjeto == null) return;
-
-        Transform obj = prensa.PontoDoObjeto.ObjetoEncaixado;
-        if (obj == null) return;
-
-        NetworkObject netObj = obj.GetComponent<NetworkObject>();
-        if (netObj != null && !netObj.HasStateAuthority)
-        {
-            netObj.RequestStateAuthority();
-        }
+        if (prensa != null) prensa.Ativar(escala);
     }
 
-    // Botão Enviar: levanta a prensa e empurra o objeto pela esteira
+    // Botao Enviar: levanta a prensa nos dois e o host empurra o objeto
     public void Enviar()
     {
-        // Confere se tem como enviar
-        if (prensa == null) return;
-        if (prensa.PontoDoObjeto == null) return;
+        if (prensa == null || prensa.PontoDoObjeto == null) return;
         if (!prensa.PontoDoObjeto.Ocupado) return;
 
-        PedirAutoridadeDoObjeto();
         StartCoroutine(SequenciaEnviar());
         FecharUI();
     }
 
-    // Sequência completa: levanta prensa, libera objeto e aplica velocidade
+    // Sequencia: levanta a prensa (visual nos dois) e o host solta + empurra
     IEnumerator SequenciaEnviar()
     {
-        // Espera a prensa subir antes de soltar o objeto
-        yield return prensa.Levantar();
+        // Todos sobem a prensa
+        RPC_Levantar();
 
-        Transform obj = prensa.PontoDoObjeto.LiberarObjeto();
+        // Espera a prensa subir antes de soltar o objeto
+        yield return new WaitForSeconds(tempoAntesDeEnviar);
+
+        Transform obj = prensa.PontoDoObjeto.ObjetoEncaixado;
         if (obj == null) yield break;
         if (destino == null) yield break;
 
-        Rigidbody rb = obj.GetComponent<Rigidbody>();
-        if (rb == null) yield break;
+        ArrastarItem item = obj.GetComponent<ArrastarItem>();
+        if (item == null) yield break;
 
-        // Religa a física para o objeto poder ser movido
-        rb.isKinematic = false;
-        yield return new WaitForFixedUpdate();
-
-        // Calcula a direção horizontal do objeto até o destino
+        // Direcao horizontal do objeto ate o destino
         Vector3 dir = destino.position - obj.position;
         dir.y = 0f;
         dir = dir.normalized;
 
-        // Aplica a velocidade no objeto para ele andar até a esteira
-        rb.linearVelocity = dir * velocidadeEsteira;
+        // So eu (quem operou) mando o host soltar e empurrar, pra nao empurrar duas vezes
+        item.RPC_Enviar(dir * velocidadeEsteira);
+    }
+
+    // RPC: a prensa sobe de volta em todos os clientes
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    private void RPC_Levantar()
+    {
+        if (prensa != null) StartCoroutine(prensa.Levantar());
     }
 
     // Atualiza o texto da UI mostrando a escala selecionada
@@ -212,8 +206,10 @@ public class PainelPrensa : MonoBehaviour
     // Verifica se tem objeto encaixado na prensa
     bool ObjetoNaPrensa()
     {
-        if (prensa.PontoDoObjeto == null) return false;
-        return prensa.PontoDoObjeto.Ocupado;
+        PontoDeEncaixe ponto = prensa.PontoDoObjeto;
+        if (ponto == null) return false;
+        if (ponto.Object == null) return false; // ainda nao entrou na rede
+        return ponto.Ocupado;
     }
 
     // Detecta toque na tela (mobile) ou clique do mouse (editor)

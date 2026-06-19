@@ -8,6 +8,12 @@ public class Player : NetworkBehaviour
     public static Transform LocalPontoMao { get; private set; }
     public static Camera LocalCamera { get; private set; }
 
+    // Referencia ao Player do jogador local (usado pra carregar objetos em rede).
+    public static Player Local { get; private set; }
+
+    // Ponto da mao exposto pra rede: o host le a mao do dono pra mover o objeto.
+    public Transform PontoMao => pontoMao;
+
     public static event System.Action SolicitarAtivarCamera;
 
     // Personagem (Kofi/Aldric) sincronizado na rede. Escrito apenas pelo dono do objeto.
@@ -64,6 +70,7 @@ public class Player : NetworkBehaviour
             LocalPontoMao = pontoMao;
             LocalCamera = cameraHolder != null ? cameraHolder.GetComponentInChildren<Camera>() : Camera.main;
             LocalSpawnou = true;
+            Local = this;
 
             // Próprio corpo → LocalPlayer: câmera local não renderiza
             if (localLayer >= 0)
@@ -127,6 +134,7 @@ public class Player : NetworkBehaviour
             LocalTransform = null;
             LocalPontoMao = null;
             LocalCamera = null;
+            Local = null;
         }
     }
 

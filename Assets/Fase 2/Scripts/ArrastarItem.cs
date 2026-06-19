@@ -1,37 +1,38 @@
+using Fusion;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
-// Pega, segura na mão e solta objetos (encaixando em pontos ou largando).
-// Versão local: escreve a posição no Update, então os objetos Pegáveis NÃO
-// devem ter NetworkTransform (senão a rede briga com a escrita e o objeto trava).
-public class ArrastarItem : MonoBehaviour
+// Objeto que o Kofi carrega na mao e encaixa na prensa.
+// Agora em rede: quem manda na posicao e o host (StateAuthority). Ele escreve a
+// posicao e o NetworkRigidbody espelha pro outro jogador, entao o Aldric ve o
+// objeto se mexer e ir pra prensa.
+public class ArrastarItem : NetworkBehaviour
 {
-    // Garante que só um objeto seja segurado por vez
-    private static ArrastarItem objetoSendoSeguro = null;
+    // So deixo o jogador local segurar um objeto por vez (controle local).
+    private static ArrastarItem objetoLocalSeguro = null;
 
-    private Transform jogador;          // jogador local
-    private Transform pontoMao;         // ponto onde o objeto fica preso (mão)
-    private Camera cam;                 // câmera usada no raycast
-    private bool segurandoEsteObjeto = false; // se está nas minhas mãos
-    private Rigidbody rb;
-    private float tempoCooldown = 4f;   // tempo até poder pegar de novo
+    // Quem esta segurando (null = ninguem). Sincronizado.
+    [Networked] public Player Dono { get; set; }
+    // Se esta travado no ponto de encaixe (parado na prensa). Sincronizado.
+    [Networked] public NetworkBool Encaixado { get; set; }
+    // Ponto onde foi encaixado, pra liberar depois. Sincronizado.
+    [Networked] public PontoDeEncaixe PontoAtual { get; set; }
+
+    [SerializeField] private float velocidadeMao = 15f; // suavidade ao seguir a mao
 
     public float maxTimeBetweenTaps = 0.3f; // janela entre os dois toques pra soltar
     private int tapCount = 0;
     private float lastTapTime = 0;
-    public UnityEvent onDoubleTap;
 
-    void Start()
+    private Rigidbody rb;
+    private Camera cam;
+    private bool euQueSeguro = false; // verdadeiro so na maquina de quem pegou
+    private bool entrouNaRede = false; // so leio variaveis [Networked] depois do Spawned
+
+    public override void Spawned()
     {
+        entrouNaRede = true;
         rb = GetComponent<Rigidbody>();
-
-        if (rb != null)
-        {
-            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-            rb.interpolation = RigidbodyInterpolation.Interpolate;
-            rb.constraints = RigidbodyConstraints.FreezeRotation;
-        }
 
         // Corrige escala negativa que quebra o collider
         Vector3 s = transform.localScale;
@@ -40,59 +41,64 @@ public class ArrastarItem : MonoBehaviour
 
     void Update()
     {
-        // Conta o cooldown pra baixo
-        if (tempoCooldown > 0f)
-        {
-            tempoCooldown -= Time.deltaTime;
-        }
+        // Antes de entrar na rede nao da pra ler Dono/Encaixado (variaveis [Networked])
+        if (!entrouNaRede) return;
 
-        // Acha as referências do jogador local na primeira vez
-        if (jogador == null)
-        {
-            jogador = Player.LocalTransform;
-            if (jogador == null) return;
-
-            pontoMao = Player.LocalPontoMao != null ? Player.LocalPontoMao : jogador;
+        // Pega a camera do jogador local pro raycast do toque
+        if (cam == null)
             cam = Player.LocalCamera != null ? Player.LocalCamera : Camera.main;
-        }
 
-        // Segurando: gruda na mão e espera dois toques pra soltar
-        if (segurandoEsteObjeto)
+        // Se sou EU que estou segurando, espero o double-tap pra soltar
+        if (euQueSeguro)
         {
-            AtualizarPosicaoNaMao();
-
             Vector2 toque;
             if (DetectouToque(out toque))
             {
-                // Dois toques rápidos (double-tap) soltam o objeto
                 float agora = Time.time;
-                if (agora - lastTapTime <= maxTimeBetweenTaps)
-                    tapCount++;
-                else
-                    tapCount = 1;
+                if (agora - lastTapTime <= maxTimeBetweenTaps) tapCount++;
+                else tapCount = 1;
 
                 lastTapTime = agora;
 
                 if (tapCount >= 2)
                 {
                     tapCount = 0;
-                    onDoubleTap?.Invoke();
-                    SoltarObjeto();
+                    euQueSeguro = false;
+                    objetoLocalSeguro = null;
+                    RPC_Soltar();
                 }
             }
             return;
         }
 
-        // Não tenta pegar em cooldown, se já tem alguém segurando, ou se a tag não bate
-        if (tempoCooldown > 0f) return;
-        if (objetoSendoSeguro != null) return;
+        // Nao tento pegar se ja tem dono, se esta encaixado, ou se ja seguro outro
+        if (Dono != null) return;
+        if (Encaixado) return;
+        if (objetoLocalSeguro != null) return;
         if (!CompareTag("Pegavel")) return;
+        if (Player.LocalTransform == null) return;
 
-        // Pega o objeto se tocar nele
         Vector2 posicaoToque;
         if (DetectouToque(out posicaoToque))
-        {
             TentarPegarObjeto(posicaoToque);
+    }
+
+    // O host escreve a posicao do objeto; o NetworkRigidbody espelha pros dois.
+    public override void FixedUpdateNetwork()
+    {
+        // So o dono mexe; o NetworkRigidbody 3D cuida de sincronizar nos outros.
+        if (!HasStateAuthority) return;
+        if (Encaixado) return; // encaixado fica parado no ponto
+
+        if (Dono != null && Dono.PontoMao != null)
+        {
+            if (!rb.isKinematic) rb.isKinematic = true;
+            transform.position = Vector3.Lerp(transform.position, Dono.PontoMao.position, Runner.DeltaTime * velocidadeMao);
+            transform.rotation = Quaternion.Lerp(transform.rotation, Dono.PontoMao.rotation, Runner.DeltaTime * velocidadeMao);
+        }
+        else
+        {
+            if (rb.isKinematic) rb.isKinematic = false; // solto: volta a cair
         }
     }
 
@@ -120,12 +126,11 @@ public class ArrastarItem : MonoBehaviour
         return false;
     }
 
-    // Vê se o toque acertou este objeto e o pega
+    // Ve se o toque acertou este objeto e pede pra pegar
     void TentarPegarObjeto(Vector2 posicaoToque)
     {
         if (cam == null) return;
 
-        // Raio da câmera ignorando a camada do jogador (câmera fica dentro do corpo)
         Ray ray = cam.ScreenPointToRay(posicaoToque);
         int camadaJogador = LayerMask.NameToLayer("LocalPlayer");
         int mascara = camadaJogador >= 0 ? ~(1 << camadaJogador) : Physics.DefaultRaycastLayers;
@@ -139,29 +144,17 @@ public class ArrastarItem : MonoBehaviour
             if (hit.collider.isTrigger) continue;
             if (hit.collider.CompareTag("Player")) continue;
 
-            // O primeiro sólido tem que ser este objeto
             bool acertouEste = hit.collider.transform == transform
                             || hit.collider.transform.IsChildOf(transform);
 
             if (acertouEste)
-            {
                 PegarObjeto();
-                return;
-            }
 
             break;
         }
     }
 
-    // Faz o objeto acompanhar a mão do jogador
-    void AtualizarPosicaoNaMao()
-    {
-        if (pontoMao == null) return;
-        transform.position = pontoMao.position;
-        transform.rotation = pontoMao.rotation;
-    }
-
-    // Pega o objeto: marca como segurando e desliga a física
+    // Marca como segurando e avisa a rede
     void PegarObjeto()
     {
         // Apenas Kofi pode carregar objetos nesta fase
@@ -170,35 +163,38 @@ public class ArrastarItem : MonoBehaviour
             FeedbackUI.Mostrar("Apenas Kofi pode carregar objetos.");
             return;
         }
+        if (Player.Local == null) return;
 
-        segurandoEsteObjeto = true;
-        objetoSendoSeguro = this;
-
-        // Zera o contador pro double-tap começar limpo
+        // Trava local imediata pra resposta rapida; a rede confirma o Dono
+        euQueSeguro = true;
+        objetoLocalSeguro = this;
         tapCount = 0;
         lastTapTime = 0f;
 
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            rb.isKinematic = true;
-        }
+        RPC_Pegar(Player.Local);
     }
 
-    // Solta o objeto: tenta encaixar no ponto mais próximo, senão religa a física
-    void SoltarObjeto()
+    // Avisa o host que peguei o objeto
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_Pegar(Player quem)
     {
-        segurandoEsteObjeto = false;
-        objetoSendoSeguro = null;
+        if (Dono != null || Encaixado) return; // ja esta com alguem
+        Dono = quem;
+    }
 
+    // Avisa o host que soltei; ele decide se encaixa ou cai
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_Soltar()
+    {
+        Dono = null;
+        TentarEncaixar();
+    }
+
+    // Roda no host: procura o ponto de encaixe mais perto e trava o objeto nele
+    void TentarEncaixar()
+    {
         PontoDeEncaixe[] pontos = FindObjectsByType<PontoDeEncaixe>(FindObjectsSortMode.None);
 
-        // Considera a posição do objeto e a do jogador, e usa a menor distância
-        Vector3 posObjeto = transform.position;
-        Vector3 posJogador = jogador != null ? jogador.position : posObjeto;
-
-        // Escolhe o ponto aceito mais próximo
         PontoDeEncaixe maisProximo = null;
         float distMaisProximo = float.MaxValue;
         float raioMaisProximo = 0f;
@@ -208,10 +204,7 @@ public class ArrastarItem : MonoBehaviour
             PontoDeEncaixe ponto = pontos[i];
             if (!ponto.AceitaObjeto(gameObject)) continue;
 
-            float dist = Mathf.Min(
-                Vector3.Distance(posObjeto, ponto.transform.position),
-                Vector3.Distance(posJogador, ponto.transform.position));
-
+            float dist = Vector3.Distance(transform.position, ponto.transform.position);
             if (dist < distMaisProximo)
             {
                 distMaisProximo = dist;
@@ -222,25 +215,46 @@ public class ArrastarItem : MonoBehaviour
 
         if (maisProximo != null && distMaisProximo <= raioMaisProximo)
         {
-            maisProximo.EncaixarObjeto(transform);
-            return;
+            // Trava no ponto. Posicao e estado sincronizam pelos [Networked].
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.isKinematic = true;
+            }
+
+            transform.position = maisProximo.transform.position;
+            transform.rotation = maisProximo.transform.rotation;
+
+            Encaixado = true;
+            PontoAtual = maisProximo;
+            maisProximo.Ocupar(Object);
+        }
+        else
+        {
+            // Nao encaixou: cai no chao
+            if (rb != null) rb.isKinematic = false;
+        }
+    }
+
+    // Chamado pelo painel da prensa: solta da prensa e empurra pra esteira.
+    // Vai pro host, que e quem manda na fisica do objeto.
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_Enviar(Vector3 velocidade)
+    {
+        if (PontoAtual != null)
+        {
+            PontoAtual.Liberar();
+            PontoAtual = null;
         }
 
-        // Não encaixou: religa a gravidade e dá um cooldown
-        tempoCooldown = 0.4f;
+        Encaixado = false;
+        Dono = null;
 
         if (rb != null)
         {
             rb.isKinematic = false;
-        }
-    }
-
-    // Se o objeto for desativado segurando, solta automaticamente
-    void OnDisable()
-    {
-        if (segurandoEsteObjeto)
-        {
-            SoltarObjeto();
+            rb.linearVelocity = velocidade;
         }
     }
 }
