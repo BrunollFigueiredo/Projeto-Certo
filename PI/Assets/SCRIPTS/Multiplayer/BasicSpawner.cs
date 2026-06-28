@@ -1,0 +1,190 @@
+using Fusion;
+using Fusion.Sockets;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public enum InputButtons
+{
+    Jump = 0
+}
+
+public struct NetworkInputData : INetworkInput
+{
+    public Vector3 direction;
+    public float lookYaw;
+    public float lookPitch;
+    public NetworkButtons buttons;
+}
+
+public enum Personagem { Kofi, Aldric }
+
+public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
+{
+    [SerializeField] private NetworkPrefabRef _prefabKofi;
+    [SerializeField] private NetworkPrefabRef _prefabAldric;
+    [SerializeField] private Transform pontoDeSpawnKofi;
+    [SerializeField] private Transform pontoDeSpawnAldric;
+
+    public static Vector2 TouchMoveInput;
+    public static bool JumpPressed;
+    public static float YawInput;
+    public static float PitchInput;
+
+    // Personagem do jogador local. Definido pelo Player local quando ele nasce
+    // (e ajustado se houver conflito), por isso o setter é público.
+    public static Personagem PersonagemLocal { get; set; } = Personagem.Kofi;
+    public static int JogadoresConectados { get; private set; } = 0;
+
+    // Pontos de spawn expostos para o Player se reposicionar caso a rede
+    // resolva um conflito de personagem (ver Player.ResolverConflitoPersonagem).
+    private static Transform _pontoKofi;
+    private static Transform _pontoAldric;
+
+    public static Transform PontoDeSpawn(Personagem p)
+    {
+        return p == Personagem.Aldric ? _pontoAldric : _pontoKofi;
+    }
+
+    private Dictionary<PlayerRef, NetworkObject> _spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
+    private NetworkRunner _runner;
+
+    private void Awake()
+    {
+        _pontoKofi = pontoDeSpawnKofi;
+        _pontoAldric = pontoDeSpawnAldric;
+    }
+
+    private void Start()
+    {
+        // Zera o estado estático para que ele não vaze entre cenas/sessões.
+        // (statics sobrevivem ao recarregar a cena; sem isso o contador e o
+        // olhar acumulam valores antigos quando uma nova fase começa.)
+        ResetarEstadoEstatico();
+
+        if (_runner == null)
+            StartGame(GameMode.Shared);
+    }
+
+    private static void ResetarEstadoEstatico()
+    {
+        JogadoresConectados = 0;
+        TouchMoveInput = Vector2.zero;
+        JumpPressed = false;
+        YawInput = 0f;
+        PitchInput = 0f;
+    }
+
+    public void OnInput(NetworkRunner runner, NetworkInput input)
+    {
+        var data = new NetworkInputData();
+
+        Vector3 dir = new Vector3(TouchMoveInput.x, 0f, TouchMoveInput.y);
+        if (dir.sqrMagnitude > 1f) dir.Normalize();
+        data.direction = dir;
+
+        data.buttons.Set(InputButtons.Jump, JumpPressed);
+        data.lookYaw = YawInput;
+        data.lookPitch = PitchInput;
+
+        input.Set(data);
+        JumpPressed = false;
+    }
+
+    public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
+    {
+        JogadoresConectados++;
+
+        if (player == runner.LocalPlayer)
+        {
+            bool isAldric;
+
+            if (runner.IsSharedModeMasterClient)
+            {
+                // Criador da sala: usa a própria escolha
+                isAldric = PlayerPrefs.GetString("PapelEscolhido", "") == "Aldric";
+            }
+            else
+            {
+                // Quem entrou: pega o oposto do que o criador escolheu
+                if (runner.SessionInfo.Properties.TryGetValue("masterChar", out SessionProperty masterChar))
+                    isAldric = (int)masterChar != 1; // oposto do master
+                else
+                    isAldric = PlayerPrefs.GetString("PapelEscolhido", "") == "Aldric";
+            }
+
+            NetworkPrefabRef prefab = isAldric ? _prefabAldric : _prefabKofi;
+            Transform ponto = isAldric ? pontoDeSpawnAldric : pontoDeSpawnKofi;
+            Vector3 posicao = ponto != null ? ponto.position : transform.position;
+            Quaternion rotacao = ponto != null ? ponto.rotation : transform.rotation;
+            NetworkObject spawned = runner.Spawn(prefab, posicao, rotacao, player);
+            if (spawned != null)
+                _spawnedCharacters[player] = spawned;
+        }
+    }
+
+    public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+    {
+        JogadoresConectados--;
+
+        // Remove o personagem do jogador que saiu para não deixar fantasmas na sessão.
+        // Em Shared Mode o Fusion transfere a StateAuthority ao master client quando
+        // o dono desconecta, então o master pode fazer o Despawn.
+        if (runner.IsSharedModeMasterClient)
+        {
+            // Tenta pelo objeto registrado via Runner.SetPlayerObject (PlayerInteractor)
+            NetworkObject playerObj = runner.GetPlayerObject(player);
+            if (playerObj != null)
+            {
+                runner.Despawn(playerObj);
+            }
+            // Fallback: personagem rastreado localmente no spawn
+            else if (_spawnedCharacters.TryGetValue(player, out NetworkObject charObj))
+            {
+                if (charObj != null) runner.Despawn(charObj);
+            }
+        }
+
+        _spawnedCharacters.Remove(player);
+    }
+    public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
+    public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
+    public void OnConnectedToServer(NetworkRunner runner) { }
+    public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
+    public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
+    public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
+    public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
+    public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
+    public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
+    public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
+    public void OnSceneLoadDone(NetworkRunner runner) { }
+    public void OnSceneLoadStart(NetworkRunner runner) { }
+    public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+    public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
+    public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data) { }
+    public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
+
+    async void StartGame(GameMode mode)
+    {
+        _runner = gameObject.AddComponent<NetworkRunner>();
+        _runner.ProvideInput = true;
+
+        bool querAldric = PlayerPrefs.GetString("PapelEscolhido", "") == "Aldric";
+        int masterCharValue = querAldric ? 1 : 0;
+        var sessionProps = new Dictionary<string, SessionProperty>
+        {
+            ["masterChar"] = masterCharValue
+        };
+
+        await _runner.StartGame(new StartGameArgs()
+        {
+            GameMode = mode,
+            SessionName = "ProjetoCerto_" + SceneManager.GetActiveScene().buildIndex,
+            Scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex),
+            SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>(),
+            PlayerCount = 2,
+            SessionProperties = sessionProps
+        });
+    }
+}

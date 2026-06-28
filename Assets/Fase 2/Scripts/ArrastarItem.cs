@@ -1,4 +1,5 @@
 using Fusion;
+using Fusion.Addons.Physics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -17,6 +18,11 @@ public class ArrastarItem : NetworkBehaviour
     [Networked] public NetworkBool Encaixado { get; set; }
     // Ponto onde foi encaixado, pra liberar depois. Sincronizado.
     [Networked] public PontoDeEncaixe PontoAtual { get; set; }
+    // Pedido de envio pela esteira (a fisica e aplicada no FixedUpdateNetwork).
+    [Networked] private NetworkBool Lancar { get; set; }
+    [Networked] private Vector3 VelocidadeLancamento { get; set; }
+    // Pedido de soltar (o encaixe/Teleport tambem e feito no FixedUpdateNetwork).
+    [Networked] private NetworkBool PedidoSoltar { get; set; }
 
     [SerializeField] private float velocidadeMao = 15f; // suavidade ao seguir a mao
 
@@ -25,6 +31,7 @@ public class ArrastarItem : NetworkBehaviour
     private float lastTapTime = 0;
 
     private Rigidbody rb;
+    private NetworkRigidbody3D netRb; // pra teletransportar o objeto certo na rede
     private Camera cam;
     private bool euQueSeguro = false; // verdadeiro so na maquina de quem pegou
     private bool entrouNaRede = false; // so leio variaveis [Networked] depois do Spawned
@@ -33,6 +40,7 @@ public class ArrastarItem : NetworkBehaviour
     {
         entrouNaRede = true;
         rb = GetComponent<Rigidbody>();
+        netRb = GetComponent<NetworkRigidbody3D>();
 
         // Corrige escala negativa que quebra o collider
         Vector3 s = transform.localScale;
@@ -88,13 +96,44 @@ public class ArrastarItem : NetworkBehaviour
     {
         // So o dono mexe; o NetworkRigidbody 3D cuida de sincronizar nos outros.
         if (!HasStateAuthority) return;
+
+        // Pedido de envio pela esteira: liga a fisica e empurra. Tem que ser aqui
+        // (no FixedUpdateNetwork), senao o NetworkRigidbody descarta a velocidade.
+        if (Lancar)
+        {
+            Lancar = false;
+            if (rb != null)
+            {
+                rb.isKinematic = false;
+                rb.linearVelocity = VelocidadeLancamento;
+            }
+            return;
+        }
+
+        // Pedido de soltar: o encaixe (Teleport) tem que ser feito aqui, nao no RPC.
+        if (PedidoSoltar)
+        {
+            PedidoSoltar = false;
+            TentarEncaixar();
+            return;
+        }
+
         if (Encaixado) return; // encaixado fica parado no ponto
 
         if (Dono != null && Dono.PontoMao != null)
         {
             if (!rb.isKinematic) rb.isKinematic = true;
-            transform.position = Vector3.Lerp(transform.position, Dono.PontoMao.position, Runner.DeltaTime * velocidadeMao);
-            transform.rotation = Quaternion.Lerp(transform.rotation, Dono.PontoMao.rotation, Runner.DeltaTime * velocidadeMao);
+
+            // Alvo suavizado em direcao a mao
+            Vector3 alvoPos = Vector3.Lerp(transform.position, Dono.PontoMao.position, Runner.DeltaTime * velocidadeMao);
+            Quaternion alvoRot = Quaternion.Lerp(transform.rotation, Dono.PontoMao.rotation, Runner.DeltaTime * velocidadeMao);
+
+            // Com NetworkRigidbody, so o Teleport realmente move na rede; escrever no
+            // transform/rb e sobrescrito pela sincronizacao da fisica a cada tick.
+            if (netRb != null)
+                netRb.Teleport(alvoPos, alvoRot);
+            else
+                transform.SetPositionAndRotation(alvoPos, alvoRot);
         }
         else
         {
@@ -187,7 +226,7 @@ public class ArrastarItem : NetworkBehaviour
     private void RPC_Soltar()
     {
         Dono = null;
-        TentarEncaixar();
+        PedidoSoltar = true; // o encaixe (Teleport) e feito no FixedUpdateNetwork
     }
 
     // Roda no host: procura o ponto de encaixe mais perto e trava o objeto nele
@@ -218,13 +257,21 @@ public class ArrastarItem : NetworkBehaviour
             // Trava no ponto. Posicao e estado sincronizam pelos [Networked].
             if (rb != null)
             {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
+                // Zera a velocidade so se ainda nao for kinematic (senao da warning)
+                if (!rb.isKinematic)
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
                 rb.isKinematic = true;
             }
 
-            transform.position = maisProximo.transform.position;
-            transform.rotation = maisProximo.transform.rotation;
+            // Teleport do NetworkRigidbody: salto instantaneo que sincroniza certo
+            // (mexer so no transform e descartado pela rede).
+            if (netRb != null)
+                netRb.Teleport(maisProximo.transform.position, maisProximo.transform.rotation);
+            else
+                transform.SetPositionAndRotation(maisProximo.transform.position, maisProximo.transform.rotation);
 
             Encaixado = true;
             PontoAtual = maisProximo;
@@ -251,10 +298,8 @@ public class ArrastarItem : NetworkBehaviour
         Encaixado = false;
         Dono = null;
 
-        if (rb != null)
-        {
-            rb.isKinematic = false;
-            rb.linearVelocity = velocidade;
-        }
+        // Marca o pedido; a fisica e ligada no FixedUpdateNetwork (acima).
+        VelocidadeLancamento = velocidade;
+        Lancar = true;
     }
 }
